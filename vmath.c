@@ -7,7 +7,7 @@ typedef double scalar;
 #endif
 
 #ifndef VEC_NOSTDMEM
-#include <stdlib.h>
+#include <string.h>
 #define vmemset memset
 #define vmemcpy memcpy
 #else
@@ -27,6 +27,7 @@ typedef struct vec3_s
 
 // plane: x,y,z is unit normal
 //        w is (signed) distance in normal direction
+// quat: x,y,z is i,j,k components, w is real comp.
 
 typedef struct vec4_s
 {
@@ -58,12 +59,12 @@ typedef struct mat4x4_s
 
 #ifndef VEC_DOUBLEPREC
 #define vsqrt sqrtf
-#define vabs absf
+#define vabs fabsf
 #define vsin sinf
 #define vcos cosf
 #else
 #define vsqrt sqrt
-#define vabs abs
+#define vabs fabs
 #define vsin sin
 #define vcos cos
 #endif
@@ -109,7 +110,7 @@ void vec2_scale(vec2 *r, scalar s, vec2 *v)
 	r->x = s * v->x; r->y = s * v->y;
 }
 
-// r = v / |v|
+// r = v / |v| (possible divby0)
 void vec2_normalize(vec2 *r, vec2 *v)
 {
 	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y);
@@ -205,8 +206,8 @@ void vec3_scale(vec3 *r, scalar s, vec3 *v)
 	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
 }
 
-// r = v / |v|
-scalar vec3_normalize(vec3 *r, vec3 *v)
+// r = v / |v|  (possible divby0)
+void vec3_normalize(vec3 *r, vec3 *v)
 {
 	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
@@ -307,13 +308,12 @@ void vec4_scale(vec4 *r, scalar s, vec4 *v)
 	r->z = s * v->z; r->w = s * v->w;
 }
 
-// r = v / |v|
-scalar vec4_normalize(vec4 *r, vec4 *v)
+// r = v / |v| (possible divby0)
+void vec4_normalize(vec4 *r, vec4 *v)
 {
 	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
 	r->x = s * v->x; r->y = s * v->y;
 	r->z = s * v->z; r->w = s * v->w;
-	return s;
 }
 
 // r = u + v
@@ -397,7 +397,7 @@ void vec3_eq_vec2(vec3 *r, vec2 *v)
 }
 
 // vec3 = vec4
-void vec3_eq_vec4(vec3 *r, vec2 *v)
+void vec3_eq_vec4(vec3 *r, vec4 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = v->z; 
 }
@@ -409,7 +409,7 @@ void vec4_eq_vec2(vec4 *r, vec2 *v)
 }
 
 // vec4 = vec3
-void vec4_eq_vec3(vec4 *r, vec2 *v)
+void vec4_eq_vec3(vec4 *r, vec3 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = v->z; r->w = 0; 
 }
@@ -460,7 +460,7 @@ void mat3x4_id(mat3x4 *m)
 // m = I
 void mat4_id(mat4 *m)
 {
-	mat4_zero(m)
+	mat4_zero(m);
 	m->a.x = m->b.y = m->c.z = m->d.w = 1;
 }
 
@@ -540,10 +540,10 @@ void _vec3_mul_mat3(vec3 *r, vec3 *v, mat3 *m)
 void mat3_mul(mat3 *r, mat3 *f, mat3 *g)
 {
 	mat3 m;
-	_vec3_mul_mat3(&m->a, &f->a, g);
-	_vec3_mul_mat3(&m->b, &f->b, g);
-	_vec3_mul_mat3(&m->c, &f->c, g);
-	*r = m; // memcpy?
+	_vec3_mul_mat3(&m.a, &f->a, g);
+	_vec3_mul_mat3(&m.b, &f->b, g);
+	_vec3_mul_mat3(&m.c, &f->c, g);
+	memcpy(r, &m, sizeof m);
 }
 
 // r = v x m (r != v)
@@ -559,10 +559,10 @@ void _vec4_mul_mat3x4(vec4 *r, vec4 *v, mat3x4 *m)
 void mat3x4_mul(mat3x4 *r, mat3x4 *f, mat3x4 *g)
 {
 	mat3x4 m;
-	_vec4_mul_mat3x4(&m->a, &f->a, g);
-	_vec4_mul_mat3x4(&m->b, &f->b, g);
-	_vec4_mul_mat3x4(&m->c, &f->c, g);
-	*r = m; // memcpy?
+	_vec4_mul_mat3x4(&m.a, &f->a, g);
+	_vec4_mul_mat3x4(&m.b, &f->b, g);
+	_vec4_mul_mat3x4(&m.c, &f->c, g);
+	memcpy(r, &m, sizeof m);
 }
 
 // r = v x m (r != v)
@@ -578,11 +578,11 @@ void _vec4_mul_mat4(vec4 *r, vec4 *v, mat4 *m)
 void mat4_mul(mat4 *r, mat4 *f, mat4 *g)
 {
 	mat4 m;
-	_vec4_mul_mat4(&m->a, &f->a, g);
-	_vec4_mul_mat4(&m->b, &f->b, g);
-	_vec4_mul_mat4(&m->c, &f->c, g);
-	_vec4_mul_mat4(&m->d, &f->d, g);
-	*r = m; // memcpy?
+	_vec4_mul_mat4(&m.a, &f->a, g);
+	_vec4_mul_mat4(&m.b, &f->b, g);
+	_vec4_mul_mat4(&m.c, &f->c, g);
+	_vec4_mul_mat4(&m.d, &f->d, g);
+	memcpy(r, &m, sizeof m);
 }
 
 
@@ -591,34 +591,41 @@ void mat4_mul(mat4 *r, mat4 *f, mat4 *g)
 void mat3_trans(mat3 *r, mat3 *m)
 {
 	scalar t;
-	t = m->a.y; m->a.y = m->b.x; m->b.x = t;
-	t = m->a.z; m->a.z = m->c.x; m->c.x = t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
 	
-	t = m->b.z; m->b.z = m->c.y; m->c.y = t;
+	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
 }
 
 // r = transpose(m) ?
 void mat3x4_trans(mat3x4 *r, mat3x4 *m)
 {
 	scalar t;
-	t = m->a.y; m->a.y = m->b.x; m->b.x = t;
-	t = m->a.z; m->a.z = m->c.x; m->c.x = t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
 	
-	t = m->b.z; m->b.z = m->c.y; m->c.y = t;
+	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
+	r->a.w = m->a.w; r->b.w = m->b.w; r->c.w = m->c.w;
 }
 
 // r = transpose(m)
 void mat4_trans(mat4 *r, mat4 *m)
 {
 	scalar t;
-	t = m->a.y; m->a.y = m->b.x; m->b.x = t;
-	t = m->a.z; m->a.z = m->c.x; m->c.x = t;
-	t = m->a.w; m->a.w = m->d.x; m->d.x = t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
+	t = m->a.w; r->a.w = m->d.x; r->d.x = t;
 	
-	t = m->b.z; m->b.z = m->c.y; m->c.y = t;
-	t = m->b.w; m->b.w = m->d.y; m->d.y = t;
-
-	t = m->c.w; m->c.w = m->d.z; m->d.z = t;
+	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
+	t = m->b.w; r->b.w = m->d.y; r->d.y = t;
+	
+	t = m->c.w; r->c.w = m->d.z; r->d.z = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z; r->d.w = m->d.w;
 }
 
 
@@ -674,6 +681,89 @@ void mat4_eq_mat3x4(mat4 *r, mat3x4 *m)
 // ----    quat   ----
 // -------------------
 
+// = |v|^2
+scalar quat_lensqr(quat *v)
+{
+	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
+}
+
+scalar quat_norm(quat *v)
+{
+	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
+}
+
+// = |v|
+scalar quat_len(quat *v)
+{
+	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+}
+
+// r = 1
+void quat_id(quat *v)
+{
+	v->x = v->y = v->z = 0; v->w = 1;
+}
+
+// v = 0
+void quat_zero(quat *v)
+{
+	v->x = v->y = v->z = v->w = 0;
+}
+
+// v = {x, y, z, w}
+void quat_set(quat *v, scalar x, scalar y, scalar z, scalar w)
+{
+	v->x = x; v->y = y; v->z = z; v->w = w;
+}
+
+// r = v
+void quat_copy(quat *r, quat *v)
+{
+	r->x = v->x; r->y = v->y;
+	r->z = v->z; r->w = v->w;
+}
+
+// r = s * v
+void quat_scale(quat *r, scalar s, quat *v)
+{
+	r->x = s * v->x; r->y = s * v->y;
+	r->z = s * v->z; r->w = s * v->w;
+}
+
+// r = v / |v| (possible divby0)
+void quat_normalize(quat *r, quat *v)
+{
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = s * v->x; r->y = s * v->y;
+	r->z = s * v->z; r->w = s * v->w;
+}
+
+// r = v^-1 (possible divby0)
+void quat_inv(quat *r, quat *v)
+{
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = -(s * v->x); r->y = -(s * v->y);
+	r->z = -(s * v->z); r->w =  (s * v->w);
+}
+
+// r = v'
+void quat_conj(quat *r, quat *v)
+{
+	r->x = -v->x; r->y = -v->y;
+	r->z = -v->z; r->w =  v->w;
+}
+
+void quat_eq_vec3(quat *r, vec3 *v)
+{
+	r->x = v->x; r->y = v->y;
+	r->z = v->z; r->w = 0;
+}
+
+void vec3_eq_quat(vec3 *r, quat *v)
+{
+	r->x = v->x; r->y = v->y; r->z = v->z;
+}
+
 
 // = u x v
 void quat_mul(quat *r, quat *u, quat *v)
@@ -708,57 +798,24 @@ void vec3_mul_quat(quat *r, vec3 *u, quat *v)
 	r->x = x; r->y = y; r->z = z; r->w = w;
 }
 
+// r = qvq'
 void vec3_rotate_quat(vec3 *r, quat *q, vec3 *v)
 {
 	quat p;
-	quat_inverse(&p, q);
+	quat_inv(&p, q);
 	vec3_mul_quat(&p, v, &p);
 	quat_mul(&p, q, &p);
-	r->x = p->x; r->y = p->y; r->z = p->z;
+	r->x = p.x; r->y = p.y; r->z = p.z;
 }
 
-scalar quat_norm(quat *v)
-{
-	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
-}
 
-scalar quat_len(quat *v)
-{
-	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-}
 
-void quat_normalize(quat *r, quat *v)
-{
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = s * v->x; r->y = s * v->y;
-	r->z = s * v->z; r->w = s * v->w;
-}
 
-void quat_scale(quat *r, scalar s, quat *v)
-{
-	r->x = s * v->x; r->y = s * v->y;
-	r->z = s * v->z; r->w = s * v->w;
-}
 
-void quat_inverse(quat *r, quat *v)
-{
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = s * -v->x; r->y = s * -v->y;
-	r->z = s * -v->z; r->w = s *  v->w;
-}
 
-void quat_conj(quat *r, quat *v)
-{
-	r->x = -v->x; r->y = -v->y;
-	r->z = -v->z; r->w =  v->w;
-}
 
-void quat_id(quat *r)
-{
-	r->x = r->y = r->z = 0; r->w = 1;
-}
 
-void mat4_from_quat(mat4 m, quat q)
+void mat4_from_quat(mat4 *m, quat *q)
 {
 	scalar i = q->x, j = q->y, k = q->z, r = q->w;
 	
@@ -777,3 +834,13 @@ void mat4_from_quat(mat4 m, quat q)
 	m->a.w = m->b.w = m->c.w = m->d.x = m->d.y = m->d.z = 0;
 	m->d.w = 1;
 }
+
+
+
+
+
+
+
+#ifdef VEC_TEST
+int main(void) {return 0;}
+#endif
