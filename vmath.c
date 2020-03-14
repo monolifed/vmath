@@ -1,15 +1,17 @@
 #include <math.h>
 
-#if !defined(VEC_PRECISION)
-#define VEC_PRECISION 1
+#ifndef VEC_DOUBLEPREC
+typedef float scalar;
+#else
+typedef double scalar;
 #endif
 
-#if VEC_PRECISION == 1
-typedef float scalar;
-#elif VEC_PRECISION == 2
-typedef double scalar;
+#ifndef VEC_NOSTDMEM
+#include <stdlib.h>
+#define vmemset memset
+#define vmemcpy memcpy
 #else
-#error "unsupported scalar type"
+#error "not implemented"
 #endif
 
 
@@ -29,7 +31,7 @@ typedef struct vec3_s
 typedef struct vec4_s
 {
 	scalar x, y, z, w;
-} vec4, quad, plane;
+} vec4, quat, plane;
 
 // a,b,c,d are rows of the matrix
 // i.e. row major matrix
@@ -41,8 +43,7 @@ typedef struct mat3x3_s
 
 typedef struct mat3x4_s
 {
-	vec4 a, b, c;
-	// d = {0, 0, 0, 1}
+	vec4 a, b, c; // d = {0, 0, 0, 1}
 } mat3x4;
 
 typedef struct mat4x4_s
@@ -55,12 +56,16 @@ typedef struct mat4x4_s
 
 
 
-#if VEC_PRECISION == 1
+#ifndef VEC_DOUBLEPREC
 #define vsqrt sqrtf
 #define vabs absf
-#elif VEC_PRECISION == 2
+#define vsin sinf
+#define vcos cosf
+#else
 #define vsqrt sqrt
 #define vabs abs
+#define vsin sin
+#define vcos cos
 #endif
 
 
@@ -69,7 +74,7 @@ typedef struct mat4x4_s
 // -------------------
 
 // = |v|^2
-scalar vec2_len2(vec2 *v)
+scalar vec2_lensqr(vec2 *v)
 {
 	return v->x * v->x + v->y * v->y;
 }
@@ -81,7 +86,7 @@ scalar vec2_len(vec2 *v)
 }
 
 // v = 0
-void vec3_zero(vec3 *v)
+void vec2_zero(vec2 *v)
 {
 	v->x = v->y = 0;
 }
@@ -104,17 +109,11 @@ void vec2_scale(vec2 *r, scalar s, vec2 *v)
 	r->x = s * v->x; r->y = s * v->y;
 }
 
-// n = v / |v|
-void vec2_norm(vec2 *n, vec2 *v)
+// r = v / |v|
+void vec2_normalize(vec2 *r, vec2 *v)
 {
-	scalar s = v->x * v->x + v->y * v->y;
-	if (s == 0)
-	{
-		n->x = n->y = 0;
-		return;
-	}
-	s = 1 / vsqrt(s);
-	n->x = s * v->x; n->y = s * v->y;
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y);
+	r->x = s * v->x; r->y = s * v->y;
 }
 
 // r = u + v
@@ -142,7 +141,7 @@ void vec2_ma(vec2 *r, vec2 *u, scalar s, vec2 *v)
 }
 
 // = |u - v|^2
-scalar vec2_dist2(vec2 *u, vec2 *v)
+scalar vec2_distsqr(vec2 *u, vec2 *v)
 {
 	scalar t, d;
 	t = u->x - v->x; d  = t * t;
@@ -171,7 +170,7 @@ scalar vec2_dist0(vec2 *u, vec2 *v)
 // -------------------
 
 // = |v|^2
-scalar vec3_len2(vec3 *v)
+scalar vec3_lensqr(vec3 *v)
 {
 	return v->x * v->x + v->y * v->y + v->z * v->z;
 }
@@ -206,17 +205,11 @@ void vec3_scale(vec3 *r, scalar s, vec3 *v)
 	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
 }
 
-// n = v / |v|
-void vec3_norm(vec3 *n, vec3 *v)
+// r = v / |v|
+scalar vec3_normalize(vec3 *r, vec3 *v)
 {
-	scalar s = v->x * v->x + v->y * v->y + v->z * v->z;
-	if (s == 0)
-	{
-		n->x = n->y = n->z = 0;
-		return;
-	}
-	s = 1 / vsqrt(s);
-	n->x = s * v->x; n->y = s * v->y; n->z = s * v->z;
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
 }
 
 // r = u + v
@@ -244,7 +237,7 @@ void vec3_ma(vec3 *r, vec3 *u, scalar s, vec3 *v)
 }
 
 // = |u - v|^2
-scalar vec3_dist2(vec3 *u, vec3 *v)
+scalar vec3_distsqr(vec3 *u, vec3 *v)
 {
 	scalar t, d;
 	t = u->x - v->x; d  = t * t;
@@ -275,7 +268,7 @@ scalar vec3_dist0(vec3 *u, vec3 *v)
 // -------------------
 
 // = |v|^2
-scalar vec4_len2(vec4 *v)
+scalar vec4_lensqr(vec4 *v)
 {
 	return v->x * v->x + v->y * v->y
 	     + v->z * v->z + v->w * v->w;
@@ -314,18 +307,13 @@ void vec4_scale(vec4 *r, scalar s, vec4 *v)
 	r->z = s * v->z; r->w = s * v->w;
 }
 
-// n = v / |v|
-void vec4_norm(vec4 *n, vec4 *v)
+// r = v / |v|
+scalar vec4_normalize(vec4 *r, vec4 *v)
 {
-	scalar s = v->x * v->x + v->y * v->y
-	         + v->z * v->z + v->w * v->w;
-	if (s == 0)
-	{
-		n->x = n->y = n->z = n->w = 0;
-	}
-	s = 1 / vsqrt(s);
-	n->x = s * v->x; n->y = s * v->y;
-	n->z = s * v->z; n->w = s * v->w;
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = s * v->x; r->y = s * v->y;
+	r->z = s * v->z; r->w = s * v->w;
+	return s;
 }
 
 // r = u + v
@@ -391,37 +379,37 @@ scalar vec4_dist0(vec4 *u, vec4 *v)
 // -------------------
 
 // vec2 = vec3
-void vec2_from3(vec2 *r, vec3 *v)
+void vec2_eq_vec3(vec2 *r, vec3 *v)
 {
 	r->x = v->x; r->y = v->y;
 }
 
 // vec2 = vec4
-void vec2_from4(vec2 *r, vec4 *v)
+void vec2_eq_vec4(vec2 *r, vec4 *v)
 {
 	r->x = v->x; r->y = v->y; 
 }
 
 // vec3 = vec2
-void vec3_from2(vec3 *r, vec2 *v)
+void vec3_eq_vec2(vec3 *r, vec2 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = 0; 
 }
 
 // vec3 = vec4
-void vec3_from4(vec3 *r, vec2 *v)
+void vec3_eq_vec4(vec3 *r, vec2 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = v->z; 
 }
 
 // vec4 = vec2
-void vec4_from2(vec4 *r, vec2 *v)
+void vec4_eq_vec2(vec4 *r, vec2 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = r->w = 0; 
 }
 
 // vec4 = vec3
-void vec4_from3(vec4 *r, vec2 *v)
+void vec4_eq_vec3(vec4 *r, vec2 *v)
 {
 	r->x = v->x; r->y = v->y; r->z = v->z; r->w = 0; 
 }
@@ -446,6 +434,10 @@ void vec3_cross(vec3 *r, vec3 *u, vec3 *v)
 	z = u->x * v->y - u->y * v->x;
 	r->x = x; r->y = y; r->z = z;
 }
+
+// -------------------
+// ----  matrix   ----
+// -------------------
 
 void mat3_zero(mat3 *m)     { memset(m, 0, sizeof(mat3));   }
 void mat3x4_zero(mat3x4 *m) { memset(m, 0, sizeof(mat3x4)); }
@@ -631,47 +623,157 @@ void mat4_trans(mat4 *r, mat4 *m)
 
 
 
-void mat3_from4(mat3 *r, mat4 *m)
+void mat3_eq_mat4(mat3 *r, mat4 *m)
 {
-	vec3_from4(&r->a, &m->a);
-	vec3_from4(&r->b, &m->b);
-	vec3_from4(&r->c, &m->c);
+	vec3_eq_vec4(&r->a, &m->a);
+	vec3_eq_vec4(&r->b, &m->b);
+	vec3_eq_vec4(&r->c, &m->c);
 }
 
-void mat3_from3x4(mat3 *r, mat3x4 *m)
+void mat3_eq_mat3x4(mat3 *r, mat3x4 *m)
 {
-	vec3_from4(&r->a, &m->a);
-	vec3_from4(&r->b, &m->b);
-	vec3_from4(&r->c, &m->c);
+	vec3_eq_vec4(&r->a, &m->a);
+	vec3_eq_vec4(&r->b, &m->b);
+	vec3_eq_vec4(&r->c, &m->c);
 }
 
 
-void mat3x4_from3(mat3x4 *r, mat3 *m)
+void mat3x4_eq_mat3(mat3x4 *r, mat3 *m)
 {
-	vec4_from3(&r->a, &m->a);
-	vec4_from3(&r->b, &m->b);
-	vec4_from3(&r->c, &m->c);
+	vec4_eq_vec3(&r->a, &m->a);
+	vec4_eq_vec3(&r->b, &m->b);
+	vec4_eq_vec3(&r->c, &m->c);
 }
 
-void mat3x4_from4(mat3x4 *r, mat4 *m)
+void mat3x4_eq_mat4(mat3x4 *r, mat4 *m)
 {
 	vec4_copy(&r->a, &m->a);
 	vec4_copy(&r->b, &m->b);
 	vec4_copy(&r->c, &m->c);
 }
 
-void mat4_from3(mat4 *r, mat3 *m)
+void mat4_eq_mat3(mat4 *r, mat3 *m)
 {
-	vec4_from3(&r->a, &m->a);
-	vec4_from3(&r->b, &m->b);
-	vec4_from3(&r->c, &m->c);
+	vec4_eq_vec3(&r->a, &m->a);
+	vec4_eq_vec3(&r->b, &m->b);
+	vec4_eq_vec3(&r->c, &m->c);
 	vec4_set(&r->d, 0, 0, 0, 1);
 }
 
-void mat4_from3x4(mat4 *r, mat3x4 *m)
+void mat4_eq_mat3x4(mat4 *r, mat3x4 *m)
 {
 	vec4_copy(&r->a, &m->a);
 	vec4_copy(&r->b, &m->b);
 	vec4_copy(&r->c, &m->c);
 	vec4_set(&r->d, 0, 0, 0, 1);
+}
+
+
+
+// -------------------
+// ----    quat   ----
+// -------------------
+
+
+// = u x v
+void quat_mul(quat *r, quat *u, quat *v)
+{
+	scalar x, y, z, w;
+	w = u->w * v->w - u->x * v->x - u->y * v->y - u->z * v->z;
+	x = u->w * v->x + u->x * v->w + u->y * v->z - u->z * v->y;
+	y = u->w * v->y - u->x * v->z + u->y * v->w + u->z * v->x;
+	z = u->w * v->z + u->x * v->y - u->y * v->x + u->z * v->w;
+	r->x = x; r->y = y; r->z = z; r->w = w;
+}
+
+// = u x v
+void quat_mul_vec3(quat *r, quat *u, vec3 *v)
+{
+	scalar x, y, z, w;
+	w = - u->x * v->x - u->y * v->y - u->z * v->z;
+	x = u->w * v->x + u->y * v->z - u->z * v->y;
+	y = u->w * v->y - u->x * v->z + u->z * v->x;
+	z = u->w * v->z + u->x * v->y - u->y * v->x;
+	r->x = x; r->y = y; r->z = z; r->w = w;
+}
+
+// = u x v
+void vec3_mul_quat(quat *r, vec3 *u, quat *v)
+{
+	scalar x, y, z, w;
+	w = - u->x * v->x - u->y * v->y - u->z * v->z;
+	x = + u->x * v->w + u->y * v->z - u->z * v->y;
+	y = - u->x * v->z + u->y * v->w + u->z * v->x;
+	z = + u->x * v->y - u->y * v->x + u->z * v->w;
+	r->x = x; r->y = y; r->z = z; r->w = w;
+}
+
+void vec3_rotate_quat(vec3 *r, quat *q, vec3 *v)
+{
+	quat p;
+	quat_inverse(&p, q);
+	vec3_mul_quat(&p, v, &p);
+	quat_mul(&p, q, &p);
+	r->x = p->x; r->y = p->y; r->z = p->z;
+}
+
+scalar quat_norm(quat *v)
+{
+	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
+}
+
+scalar quat_len(quat *v)
+{
+	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+}
+
+void quat_normalize(quat *r, quat *v)
+{
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = s * v->x; r->y = s * v->y;
+	r->z = s * v->z; r->w = s * v->w;
+}
+
+void quat_scale(quat *r, scalar s, quat *v)
+{
+	r->x = s * v->x; r->y = s * v->y;
+	r->z = s * v->z; r->w = s * v->w;
+}
+
+void quat_inverse(quat *r, quat *v)
+{
+	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = s * -v->x; r->y = s * -v->y;
+	r->z = s * -v->z; r->w = s *  v->w;
+}
+
+void quat_conj(quat *r, quat *v)
+{
+	r->x = -v->x; r->y = -v->y;
+	r->z = -v->z; r->w =  v->w;
+}
+
+void quat_id(quat *r)
+{
+	r->x = r->y = r->z = 0; r->w = 1;
+}
+
+void mat4_from_quat(mat4 m, quat q)
+{
+	scalar i = q->x, j = q->y, k = q->z, r = q->w;
+	
+	m->a.x = 1 - 2 * (j * j + k * k);
+	m->a.y = 2 * (i * j - k * r);
+	m->a.z = 2 * (i * k + j * r);
+	
+	m->b.x = 2 * (j * i + k * r);
+	m->b.y = 1 - 2 * (i * i + k * k);
+	m->b.z = 2 * (j * k - i * r);
+	
+	m->c.x = 2 * (k * i - j * r);
+	m->c.y = 2 * (k * j + i * r);
+	m->c.z = 1 - 2 * (i * i + j * j);
+	
+	m->a.w = m->b.w = m->c.w = m->d.x = m->d.y = m->d.z = 0;
+	m->d.w = 1;
 }
