@@ -74,7 +74,7 @@ typedef struct mat4x4_s
 // --- common vec2 ---
 // -------------------
 
-// = |v|^2
+// = v · v
 scalar vec2_lensqr(vec2 *v)
 {
 	return v->x * v->x + v->y * v->y;
@@ -84,6 +84,12 @@ scalar vec2_lensqr(vec2 *v)
 scalar vec2_len(vec2 *v)
 {
 	return vsqrt(v->x * v->x + v->y * v->y);
+}
+
+// = d1(v, 0)
+scalar vec2_len1(vec2 *v)
+{
+	return vabs(v->x) + vabs(v->y);
 }
 
 // v = 0
@@ -110,7 +116,13 @@ void vec2_scale(vec2 *r, scalar s, vec2 *v)
 	r->x = s * v->x; r->y = s * v->y;
 }
 
-// r = v / |v| (possible divby0)
+// r = -v
+void vec2_neg(vec2 *r, vec2 *v)
+{
+	r->x = -(v->x); r->y = -(v->y);
+}
+
+// r = v / |v| (possible division by 0)
 void vec2_normalize(vec2 *r, vec2 *v)
 {
 	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y);
@@ -159,8 +171,8 @@ scalar vec2_dist(vec2 *u, vec2 *v)
 	return vsqrt(d);
 }
 
-// = ||u - v||
-scalar vec2_dist0(vec2 *u, vec2 *v)
+// = d1(u, v)
+scalar vec2_dist1(vec2 *u, vec2 *v)
 {
 	return vabs(u->x - v->x) + vabs(u->y - v->y);
 }
@@ -170,7 +182,7 @@ scalar vec2_dist0(vec2 *u, vec2 *v)
 // --- common vec3 ---
 // -------------------
 
-// = |v|^2
+// = v · v
 scalar vec3_lensqr(vec3 *v)
 {
 	return v->x * v->x + v->y * v->y + v->z * v->z;
@@ -180,6 +192,12 @@ scalar vec3_lensqr(vec3 *v)
 scalar vec3_len(vec3 *v)
 {
 	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+}
+
+// = d1(v, 0)
+scalar vec3_len1(vec3 *v)
+{
+	return vabs(v->x) + vabs(v->y) + vabs(v->z);
 }
 
 // v = 0
@@ -206,7 +224,13 @@ void vec3_scale(vec3 *r, scalar s, vec3 *v)
 	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
 }
 
-// r = v / |v|  (possible divby0)
+// r = -v
+void vec3_neg(vec3 *r, vec3 *v)
+{
+	r->x = -(v->x); r->y = -(v->y); r->z = -(v->z);
+}
+
+// r = v / |v|  (possible division by 0)
 void vec3_normalize(vec3 *r, vec3 *v)
 {
 	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
@@ -257,8 +281,8 @@ scalar vec3_dist(vec3 *u, vec3 *v)
 	return vsqrt(d);
 }
 
-// = ||u - v||
-scalar vec3_dist0(vec3 *u, vec3 *v)
+// = d1(u, v)
+scalar vec3_dist1(vec3 *u, vec3 *v)
 {
 	return vabs(u->x - v->x) + vabs(u->y - v->y) + vabs(u->z - v->z);
 }
@@ -268,18 +292,22 @@ scalar vec3_dist0(vec3 *u, vec3 *v)
 // --- common vec4 ---
 // -------------------
 
-// = |v|^2
+// = v · v
 scalar vec4_lensqr(vec4 *v)
 {
-	return v->x * v->x + v->y * v->y
-	     + v->z * v->z + v->w * v->w;
+	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
 }
 
 // = |v|
 scalar vec4_len(vec4 *v)
 {
-	return vsqrt(v->x * v->x + v->y * v->y
-	           + v->z * v->z + v->w * v->w);
+	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+}
+
+// = d1(v, 0)
+scalar vec4_len1(vec4 *v)
+{
+	return vabs(v->x) + vabs(v->y) + vabs(v->z) + vabs(v->w);
 }
 
 // v = 0
@@ -306,6 +334,13 @@ void vec4_scale(vec4 *r, scalar s, vec4 *v)
 {
 	r->x = s * v->x; r->y = s * v->y;
 	r->z = s * v->z; r->w = s * v->w;
+}
+
+// r = -v
+void vec4_neg(vec4 *r, vec4 *v)
+{
+	r->x = -(v->x); r->y = -(v->y);
+	r->z = -(v->z); r->w = -(v->w);
 }
 
 // r = v / |v| (possible divby0)
@@ -345,7 +380,7 @@ void vec4_ma(vec4 *r, vec4 *u, scalar s, vec4 *v)
 }
 
 // = |u - v|^2
-scalar vec4_dist2(vec4 *u, vec4 *v)
+scalar vec4_distsqr(vec4 *u, vec4 *v)
 {
 	scalar t, d;
 	t = u->x - v->x; d  = t * t;
@@ -366,8 +401,8 @@ scalar vec4_dist(vec4 *u, vec4 *v)
 	return vsqrt(d);
 }
 
-// = ||u - v||
-scalar vec4_dist0(vec4 *u, vec4 *v)
+// = d1(u, v)
+scalar vec4_dist1(vec4 *u, vec4 *v)
 {
 	return vabs(u->x - v->x) + vabs(u->y - v->y)
 	     + vabs(u->z - v->z) + vabs(u->w - v->w);
@@ -433,6 +468,44 @@ void vec3_cross(vec3 *r, vec3 *u, vec3 *v)
 	y = u->z * v->x - u->x * v->z;
 	z = u->x * v->y - u->y * v->x;
 	r->x = x; r->y = y; r->z = z;
+}
+
+// p = plane of non collinear points a,b,c
+void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c)
+{
+	vec3 n, u, v;
+	vec3_sub(&u, b, a);
+	vec3_sub(&v, c, a);
+	vec3_cross(&n, &u, &v);
+	vec3_normalize(&n, &n);
+	p->x = n.x; p->y = n.y; p->z = n.z;
+	p->w = vec3_dot(a, &n);
+}
+
+// r = projection of u on plane p
+void vec3_plane_project(vec3 *r, plane *p, vec3 *u)
+{
+	vec3 n;
+	vec3_eq_vec4(&n, p);
+	scalar t = vec3_dot(&n, u) / vec3_dot(&n, &n) - p->w;
+	vec3_ma(r, u, -t, &n); // r = u - t * n
+}
+
+// r = projection of u on vec3 p (a plane containing origin)
+void vec3_project(vec3 *r, vec3 *p, vec3 *u)
+{
+	vec3 n;
+	vec3_copy(&n, p);
+	scalar t = vec3_dot(&n, u) / vec3_dot(&n, &n);
+	vec3_ma(r, u, -t, &n); // r = u - t * n
+}
+
+// r = plane v with unit normal
+void plane_normalize(plane *r, plane *v)
+{
+	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	r->x = v->x / s; r->y = v->y / s; r->z = v->z / s;
+	r->w = s * v->w;
 }
 
 // -------------------
