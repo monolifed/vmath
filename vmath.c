@@ -104,6 +104,12 @@ void vec2_set(vec2 *v, scalar x, scalar y)
 	v->x = x; v->y = y;
 }
 
+// v = {...}
+void vec2_seta(vec2 *v, scalar *u)
+{
+	v->x = u[0]; v->y = u[1];
+}
+
 // r = v
 void vec2_copy(vec2 *r, vec2 *v)
 {
@@ -139,6 +145,12 @@ void vec2_add(vec2 *r, vec2 *u, vec2 *v)
 void vec2_sub(vec2 *r, vec2 *u, vec2 *v)
 {
 	r->x = u->x - v->x; r->y = u->y - v->y;
+}
+
+// r = u * v (term-wise)
+void vec2_tmul(vec2 *r, vec2 *u, vec2 *v)
+{
+	r->x = u->x * v->x; r->y = u->y * v->y;
 }
 
 // = u · v
@@ -212,6 +224,12 @@ void vec3_set(vec3 *v, scalar x, scalar y, scalar z)
 	v->x = x; v->y = y; v->z = z;
 }
 
+// v = {...}
+void vec3_seta(vec3 *v, scalar *u)
+{
+	v->x = u[0]; v->y = u[1]; v->z = u[2];
+}
+
 // r = v
 void vec3_copy(vec3 *r, vec3 *v)
 {
@@ -247,6 +265,12 @@ void vec3_add(vec3 *r, vec3 *u, vec3 *v)
 void vec3_sub(vec3 *r, vec3 *u, vec3 *v)
 {
 	r->x = u->x - v->x; r->y = u->y - v->y; r->z = u->z - v->z;
+}
+
+// r = u * v (term-wise)
+void vec3_tmul(vec3 *r, vec3 *u, vec3 *v)
+{
+	r->x = u->x * v->x; r->y = u->y * v->y; r->z = u->z * v->z;
 }
 
 // = u · v
@@ -322,6 +346,12 @@ void vec4_set(vec4 *v, scalar x, scalar y, scalar z, scalar w)
 	v->x = x; v->y = y; v->z = z; v->w = w;
 }
 
+// v = {...}
+void vec4_seta(vec4 *v, scalar *u)
+{
+	v->x = u[0]; v->y = u[1]; v->z = u[2]; v->w = u[3];
+}
+
 // r = v
 void vec4_copy(vec4 *r, vec4 *v)
 {
@@ -363,6 +393,13 @@ void vec4_sub(vec4 *r, vec4 *u, vec4 *v)
 {
 	r->x = u->x - v->x; r->y = u->y - v->y;
 	r->z = u->z - v->z; r->w = u->w - v->w;
+}
+
+// r = u * v (term-wise)
+void vec4_tmul(vec4 *r, vec4 *u, vec4 *v)
+{
+	r->x = u->x * v->x; r->y = u->y * v->y;
+	r->z = u->z * v->z; r->w = u->w * v->w;
 }
 
 // = u · v
@@ -410,7 +447,7 @@ scalar vec4_dist1(vec4 *u, vec4 *v)
 
 
 // -------------------
-// --- conversions ---
+// --- vec convert ---
 // -------------------
 
 // vec2 = vec3
@@ -455,7 +492,7 @@ void vec4_eq_vec3(vec4 *r, vec3 *v)
 // -------------------
 
 // = u x v (scalar since first 2 component is always 0)
-scalar vec2_x(vec2 *u, vec2 *v)
+scalar vec2_cross(vec2 *u, vec2 *v)
 {
 	return u->x * v->y - u->y * v->x;
 }
@@ -508,33 +545,125 @@ void plane_normalize(plane *r, plane *v)
 	r->w = s * v->w;
 }
 
-// -------------------
-// ----  matrix   ----
-// -------------------
 
-void mat3_zero(mat3 *m)     { memset(m, 0, sizeof(mat3));   }
-void mat3x4_zero(mat3x4 *m) { memset(m, 0, sizeof(mat3x4)); }
-void mat4_zero(mat4 *m)     { memset(m, 0, sizeof(mat4));   }
+// ---------------------
+// --- common mat3x3 ---
+// ---------------------
+
+// m = 0
+void mat3_zero(mat3 *m)
+{
+	memset(m, 0, sizeof *m);
+}
 
 // m = I
 void mat3_id(mat3 *m)
 {
-	mat3_zero(m);
+	memset(m, 0, sizeof *m);
 	m->a.x = m->b.y = m->c.z = 1;
 }
 
-// m = I
-void mat3x4_id(mat3x4 *m)
+// m = [...]
+void mat3_seta(mat3 *m, scalar *s)
 {
-	mat3x4_zero(m);
-	m->a.x = m->b.y = m->c.z = 1;
+	memcpy(m, s, sizeof *m);
 }
 
-// m = I
-void mat4_id(mat4 *m)
+// m = [a, b, c]^T
+void mat3_setv(mat3 *m, vec3 *a, vec3 *b, vec3 *c)
 {
-	mat4_zero(m);
-	m->a.x = m->b.y = m->c.z = m->d.w = 1;
+	vec3_copy(&m->a, a);
+	vec3_copy(&m->b, b);
+	vec3_copy(&m->c, c);
+}
+
+// r = m
+void mat3_copy(mat3 *r, mat3 *m)
+{
+	memcpy(r, m, sizeof *m);
+}
+
+// r = column(m, ?)
+void mat3_colx(vec3 *r, mat3 *m) { vec3_set(r, m->a.x, m->b.x, m->c.x); }
+void mat3_coly(vec3 *r, mat3 *m) { vec3_set(r, m->a.y, m->b.y, m->c.y); }
+void mat3_colz(vec3 *r, mat3 *m) { vec3_set(r, m->a.z, m->b.z, m->c.z); }
+// r = row(m, ?)
+void mat3_rowa(vec3 *r, mat3 *m) { vec3_copy(r, &m->a); }
+void mat3_rowb(vec3 *r, mat3 *m) { vec3_copy(r, &m->b); }
+void mat3_rowc(vec3 *r, mat3 *m) { vec3_copy(r, &m->c); }
+
+// r = s * m
+void mat3_scale(mat3 *r, scalar s, mat3 *m)
+{
+	vec3_scale(&r->a, s, &m->a);
+	vec3_scale(&r->b, s, &m->b);
+	vec3_scale(&r->c, s, &m->c);
+}
+
+// r = -m
+void mat3_neg(mat3 *r, mat3 *m)
+{
+	vec3_neg(&r->a, &m->a);
+	vec3_neg(&r->b, &m->b);
+	vec3_neg(&r->c, &m->c);
+}
+
+// r = f + g
+void mat3_add(mat3 *r, mat3 *f, mat3 *g)
+{
+	vec3_add(&r->a, &f->a, &g->a);
+	vec3_add(&r->b, &f->b, &g->b);
+	vec3_add(&r->c, &f->c, &g->c);
+}
+
+// r = f - g
+void mat3_sub(mat3 *r, mat3 *f, mat3 *g)
+{
+	vec3_sub(&r->a, &f->a, &g->a);
+	vec3_sub(&r->b, &f->b, &g->b);
+	vec3_sub(&r->c, &f->c, &g->c);
+}
+
+// r = f * g (term-wise)
+void mat3_tmul(mat3 *r, mat3 *f, mat3 *g)
+{
+	vec3_tmul(&r->a, &f->a, &g->a);
+	vec3_tmul(&r->b, &f->b, &g->b);
+	vec3_tmul(&r->c, &f->c, &g->c);
+}
+
+// r = v x m (r != v)
+void _vec3_mul_mat3(vec3 *r, vec3 *v, mat3 *m)
+{
+	r->x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z;
+	r->y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z;
+	r->z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z;
+}
+
+// r = f x g
+void mat3_mul(mat3 *r, mat3 *f, mat3 *g)
+{
+	mat3 m;
+	_vec3_mul_mat3(&m.a, &f->a, g);
+	_vec3_mul_mat3(&m.b, &f->b, g);
+	_vec3_mul_mat3(&m.c, &f->c, g);
+	memcpy(r, &m, sizeof m);
+}
+
+// r = f + s * g
+void mat3_ma(mat3 *r, mat3 *f, scalar s, mat3 *g)
+{
+	vec3_ma(&r->a, &f->a, s, &g->a);
+	vec3_ma(&r->b, &f->b, s, &g->b);
+	vec3_ma(&r->c, &f->c, s, &g->c);
+}
+
+// = det(m)
+scalar mat3_det(mat3 *m)
+{
+	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
 }
 
 // r = v x m
@@ -555,6 +684,141 @@ void mat3_mul_vec3(vec3 *r, mat3 *m, vec3 *v)
 	y = m->b.x * v->x + m->b.y * v->y + m->b.z * v->z;
 	z = m->c.x * v->x + m->c.y * v->y + m->c.z * v->z;
 	r->x = x; r->y = y; r->z = z;
+}
+
+// r = transpose(m)
+void mat3_trans(mat3 *r, mat3 *m)
+{
+	scalar t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
+	
+	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
+}
+
+
+// ---------------------
+// --- common mat3x4 ---
+// ---------------------
+
+// m = 0
+void mat3x4_zero(mat3x4 *m)
+{
+	memset(m, 0, sizeof *m);
+}
+
+// m = I
+void mat3x4_id(mat3x4 *m)
+{
+	memset(m, 0, sizeof *m);
+	m->a.x = m->b.y = m->c.z = 1;
+}
+
+// m = [...]
+void mat3x4_seta(mat3x4 *m, scalar *s)
+{
+	memcpy(m, s, sizeof *m);
+}
+
+// m = [a, b, c]^T
+void mat3x4_setv(mat3x4 *m, vec4 *a, vec4 *b, vec4 *c)
+{
+	vec4_copy(&m->a, a);
+	vec4_copy(&m->b, b);
+	vec4_copy(&m->c, c);
+}
+
+// r = m
+void mat3x4_copy(mat3x4 *r, mat3x4 *m)
+{
+	memcpy(r, m, sizeof *m);
+}
+
+// r = column(m, ?)
+void mat3x4_colx(vec3 *r, mat3x4 *m) { vec3_set(r, m->a.x, m->b.x, m->c.x); } //d.x = 0
+void mat3x4_coly(vec3 *r, mat3x4 *m) { vec3_set(r, m->a.y, m->b.y, m->c.y); } //d.y = 0
+void mat3x4_colz(vec3 *r, mat3x4 *m) { vec3_set(r, m->a.z, m->b.z, m->c.z); } //d.z = 0
+void mat3x4_colw(vec3 *r, mat3x4 *m) { vec3_set(r, m->a.w, m->b.w, m->c.w); } //d.w = 1
+// r = row(m, ?)
+void mat3x4_rowa(vec4 *r, mat3x4 *m) { vec4_copy(r, &m->a); }
+void mat3x4_rowb(vec4 *r, mat3x4 *m) { vec4_copy(r, &m->b); }
+void mat3x4_rowc(vec4 *r, mat3x4 *m) { vec4_copy(r, &m->c); }
+
+// r = s * m
+void mat3x4_scale(mat3x4 *r, scalar s, mat3x4 *m)
+{
+	vec4_scale(&r->a, s, &m->a);
+	vec4_scale(&r->b, s, &m->b);
+	vec4_scale(&r->c, s, &m->c);
+}
+
+// r = -m
+void mat3x4_neg(mat3x4 *r, mat3x4 *m)
+{
+	vec4_neg(&r->a, &m->a);
+	vec4_neg(&r->b, &m->b);
+	vec4_neg(&r->c, &m->c);
+}
+
+// r = f + g
+void mat3x4_add(mat3x4 *r, mat3x4 *f, mat3x4 *g)
+{
+	vec4_add(&r->a, &f->a, &g->a);
+	vec4_add(&r->b, &f->b, &g->b);
+	vec4_add(&r->c, &f->c, &g->c);
+}
+
+// r = f - g
+void mat3x4_sub(mat3x4 *r, mat3x4 *f, mat3x4 *g)
+{
+	vec4_sub(&r->a, &f->a, &g->a);
+	vec4_sub(&r->b, &f->b, &g->b);
+	vec4_sub(&r->c, &f->c, &g->c);
+}
+
+// r = f * g (term-wise)
+void mat3x4_tmul(mat3x4 *r, mat3x4 *f, mat3x4 *g)
+{
+	vec4_tmul(&r->a, &f->a, &g->a);
+	vec4_tmul(&r->b, &f->b, &g->b);
+	vec4_tmul(&r->c, &f->c, &g->c);
+}
+
+// r = v x m (r != v)
+void _vec4_mul_mat3x4(vec4 *r, vec4 *v, mat3x4 *m)
+{
+	r->x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z;
+	r->y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z;
+	r->z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z;
+	r->w = m->a.w * v->x + m->b.w * v->y + m->c.w * v->z + v->w;
+}
+
+// r = f x g
+void mat3x4_mul(mat3x4 *r, mat3x4 *f, mat3x4 *g)
+{
+	mat3x4 m;
+	_vec4_mul_mat3x4(&m.a, &f->a, g);
+	_vec4_mul_mat3x4(&m.b, &f->b, g);
+	_vec4_mul_mat3x4(&m.c, &f->c, g);
+	memcpy(r, &m, sizeof m);
+}
+
+// r = f + s * g
+void mat3x4_ma(mat3x4 *r, mat3x4 *f, scalar s, mat3x4 *g)
+{
+	vec4_ma(&r->a, &f->a, s, &g->a);
+	vec4_ma(&r->b, &f->b, s, &g->b);
+	vec4_ma(&r->c, &f->c, s, &g->c);
+}
+
+// = det(m)
+scalar mat3x4_det(mat3x4 *m)
+{
+	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
 }
 
 // r = v x m
@@ -579,63 +843,112 @@ void mat3x4_mul_vec4(vec4 *r, mat3x4 *m, vec4 *v)
 	r->x = x; r->y = y; r->z = z; r->w = w;
 }
 
-// r = v x m
-void vec4_mul_mat4(vec4 *r, vec4 *v, mat4 *m)
+// r = transpose(m) (inner 3x3 only)
+void mat3x4_trans(mat3x4 *r, mat3x4 *m)
 {
-	scalar x, y, z, w;
-	x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z + m->d.x * v->w;
-	y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z + m->d.y * v->w;
-	z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z + m->d.z * v->w;
-	w = m->a.w * v->x + m->b.w * v->y + m->c.w * v->z + m->d.w * v->w;
-	r->x = x; r->y = y; r->z = z; r->w = w;
+	scalar t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
+	
+	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
+	r->a.w = m->a.w; r->b.w = m->b.w; r->c.w = m->c.w;
 }
 
-// r = m x v
-void mat4_mul_vec4(vec4 *r, mat4 *m, vec4 *v)
+
+// ---------------------
+// --- common mat4x4 ---
+// ---------------------
+
+// m = 0
+void mat4_zero(mat4 *m)
 {
-	scalar x, y, z, w;
-	x = m->a.x * v->x + m->a.y * v->y + m->a.z * v->z + m->a.w * v->w;
-	y = m->b.x * v->x + m->b.y * v->y + m->b.z * v->z + m->b.w * v->w;
-	z = m->c.x * v->x + m->c.y * v->y + m->c.z * v->z + m->c.w * v->w;
-	w = m->d.x * v->x + m->d.y * v->y + m->d.z * v->z + m->d.w * v->w;
-	r->x = x; r->y = y; r->z = z; r->w = w;
+	memset(m, 0, sizeof *m);
 }
 
-// r = v x m (r != v)
-void _vec3_mul_mat3(vec3 *r, vec3 *v, mat3 *m)
+// m = I
+void mat4_id(mat4 *m)
 {
-	r->x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z;
-	r->y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z;
-	r->z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z;
+	memset(m, 0, sizeof *m);
+	m->a.x = m->b.y = m->c.z = m->d.w = 1;
 }
 
-// r = f x g
-void mat3_mul(mat3 *r, mat3 *f, mat3 *g)
+// m = [...]
+void mat4_seta(mat4 *m, scalar *s)
 {
-	mat3 m;
-	_vec3_mul_mat3(&m.a, &f->a, g);
-	_vec3_mul_mat3(&m.b, &f->b, g);
-	_vec3_mul_mat3(&m.c, &f->c, g);
-	memcpy(r, &m, sizeof m);
+	memcpy(m, s, sizeof *m);
 }
 
-// r = v x m (r != v)
-void _vec4_mul_mat3x4(vec4 *r, vec4 *v, mat3x4 *m)
+// m = [a, b, c]^T
+void mat4_setv(mat4 *m, vec4 *a, vec4 *b, vec4 *c, vec4 *d)
 {
-	r->x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z;
-	r->y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z;
-	r->z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z;
-	r->w = m->a.w * v->x + m->b.w * v->y + m->c.w * v->z + v->w;
+	vec4_copy(&m->a, a);
+	vec4_copy(&m->b, b);
+	vec4_copy(&m->c, c);
+	vec4_copy(&m->d, d);
 }
 
-// r = f x g
-void mat3x4_mul(mat3x4 *r, mat3x4 *f, mat3x4 *g)
+// r = m
+void mat4_copy(mat4 *r, mat4 *m)
 {
-	mat3x4 m;
-	_vec4_mul_mat3x4(&m.a, &f->a, g);
-	_vec4_mul_mat3x4(&m.b, &f->b, g);
-	_vec4_mul_mat3x4(&m.c, &f->c, g);
-	memcpy(r, &m, sizeof m);
+	memcpy(r, m, sizeof *m);
+}
+
+// r = column(m, ?)
+void mat4_colx(vec4 *r, mat4 *m) { vec4_set(r, m->a.x, m->b.x, m->c.x, m->d.x); }
+void mat4_coly(vec4 *r, mat4 *m) { vec4_set(r, m->a.y, m->b.y, m->c.y, m->d.y); }
+void mat4_colz(vec4 *r, mat4 *m) { vec4_set(r, m->a.z, m->b.z, m->c.z, m->d.z); }
+void mat4_colw(vec4 *r, mat4 *m) { vec4_set(r, m->a.w, m->b.w, m->c.w, m->d.w); }
+// r = row(m, ?)
+void mat4_rowa(vec4 *r, mat4 *m) { vec4_copy(r, &m->a); }
+void mat4_rowb(vec4 *r, mat4 *m) { vec4_copy(r, &m->b); }
+void mat4_rowc(vec4 *r, mat4 *m) { vec4_copy(r, &m->c); }
+void mat4_rowd(vec4 *r, mat4 *m) { vec4_copy(r, &m->d); }
+
+// r = s * m
+void mat4_scale(mat4 *r, scalar s, mat4 *m)
+{
+	vec4_scale(&r->a, s, &m->a);
+	vec4_scale(&r->b, s, &m->b);
+	vec4_scale(&r->c, s, &m->c);
+	vec4_scale(&r->d, s, &m->d);
+}
+
+// r = -m
+void mat4_neg(mat4 *r, mat4 *m)
+{
+	vec4_neg(&r->a, &m->a);
+	vec4_neg(&r->b, &m->b);
+	vec4_neg(&r->c, &m->c);
+	vec4_neg(&r->d, &m->d);
+}
+
+// r = f + g
+void mat4_add(mat4 *r, mat4 *f, mat4 *g)
+{
+	vec4_add(&r->a, &f->a, &g->a);
+	vec4_add(&r->b, &f->b, &g->b);
+	vec4_add(&r->c, &f->c, &g->c);
+	vec4_add(&r->d, &f->d, &g->d);
+}
+
+// r = f - g
+void mat4_sub(mat4 *r, mat4 *f, mat4 *g)
+{
+	vec4_sub(&r->a, &f->a, &g->a);
+	vec4_sub(&r->b, &f->b, &g->b);
+	vec4_sub(&r->c, &f->c, &g->c);
+	vec4_sub(&r->d, &f->d, &g->d);
+}
+
+// r = f * g (term-wise)
+void mat4_tmul(mat4 *r, mat4 *f, mat4 *g)
+{
+	vec4_tmul(&r->a, &f->a, &g->a);
+	vec4_tmul(&r->b, &f->b, &g->b);
+	vec4_tmul(&r->c, &f->c, &g->c);
+	vec4_tmul(&r->d, &f->d, &g->d);
 }
 
 // r = v x m (r != v)
@@ -658,31 +971,55 @@ void mat4_mul(mat4 *r, mat4 *f, mat4 *g)
 	memcpy(r, &m, sizeof m);
 }
 
-
-
-// r = transpose(m)
-void mat3_trans(mat3 *r, mat3 *m)
+// r = f + s * g
+void mat4_ma(mat4 *r, mat4 *f, scalar s, mat4 *g)
 {
-	scalar t;
-	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
-	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
-	
-	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
-	
-	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
+	vec4_ma(&r->a, &f->a, s, &g->a);
+	vec4_ma(&r->b, &f->b, s, &g->b);
+	vec4_ma(&r->c, &f->c, s, &g->c);
 }
 
-// r = transpose(m) ?
-void mat3x4_trans(mat3x4 *r, mat3x4 *m)
+#define VDET2(a,b, c,d) ((a)*(d) - (b)*(c))
+#define VDET3(a,b,c, d,e,f, g,h,i) \
+	((a)*VDET2(e,f,h,i) - (b)*VDET2(d,f,g,i) + (c)*VDET2(d,e,g,h))
+// = det(m)
+scalar mat4_det(mat4 *m)
 {
-	scalar t;
-	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
-	t = m->a.z; r->a.z = m->c.x; r->c.x = t;
-	
-	t = m->b.z; r->b.z = m->c.y; r->c.y = t;
-	
-	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
-	r->a.w = m->a.w; r->b.w = m->b.w; r->c.w = m->c.w;
+	scalar s = 0;
+	s += m->a.x * VDET3(m->b.y, m->b.z, m->b.w, m->c.y, m->c.z, m->c.w, m->d.y, m->d.z, m->d.w);
+	s -= m->a.y * VDET3(m->b.x, m->b.z, m->b.w, m->c.x, m->c.z, m->c.w, m->d.x, m->d.z, m->d.w);
+	s += m->a.z * VDET3(m->b.x, m->b.y, m->b.w, m->c.x, m->c.y, m->c.w, m->d.x, m->d.y, m->d.w);
+	s -= m->a.w * VDET3(m->b.x, m->b.y, m->b.z, m->c.x, m->c.y, m->c.z, m->d.x, m->d.y, m->d.z);
+	return s;
+}
+
+scalar mat4_det3(mat4 *m)
+{
+	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+}
+
+// r = v x m
+void vec4_mul_mat4(vec4 *r, vec4 *v, mat4 *m)
+{
+	scalar x, y, z, w;
+	x = m->a.x * v->x + m->b.x * v->y + m->c.x * v->z + m->d.x * v->w;
+	y = m->a.y * v->x + m->b.y * v->y + m->c.y * v->z + m->d.y * v->w;
+	z = m->a.z * v->x + m->b.z * v->y + m->c.z * v->z + m->d.z * v->w;
+	w = m->a.w * v->x + m->b.w * v->y + m->c.w * v->z + m->d.w * v->w;
+	r->x = x; r->y = y; r->z = z; r->w = w;
+}
+
+// r = m x v
+void mat4_mul_vec4(vec4 *r, mat4 *m, vec4 *v)
+{
+	scalar x, y, z, w;
+	x = m->a.x * v->x + m->a.y * v->y + m->a.z * v->z + m->a.w * v->w;
+	y = m->b.x * v->x + m->b.y * v->y + m->b.z * v->z + m->b.w * v->w;
+	z = m->c.x * v->x + m->c.y * v->y + m->c.z * v->z + m->c.w * v->w;
+	w = m->d.x * v->x + m->d.y * v->y + m->d.z * v->z + m->d.w * v->w;
+	r->x = x; r->y = y; r->z = z; r->w = w;
 }
 
 // r = transpose(m)
@@ -702,6 +1039,9 @@ void mat4_trans(mat4 *r, mat4 *m)
 }
 
 
+// -------------------
+// ---- mat other ----
+// -------------------
 
 void mat3_eq_mat4(mat3 *r, mat4 *m)
 {
@@ -787,6 +1127,11 @@ void quat_zero(quat *v)
 void quat_set(quat *v, scalar x, scalar y, scalar z, scalar w)
 {
 	v->x = x; v->y = y; v->z = z; v->w = w;
+}
+
+void quat_seta(quat *v, scalar *u)
+{
+	v->x = u[0]; v->y = u[1]; v->z = u[2]; v->w = u[3];
 }
 
 // r = v
