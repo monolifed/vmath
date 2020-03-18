@@ -131,8 +131,8 @@ void vec2_neg(vec2 *r, vec2 *v)
 // r = v / |v| (possible division by 0)
 void vec2_normalize(vec2 *r, vec2 *v)
 {
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y);
-	r->x = s * v->x; r->y = s * v->y;
+	scalar s = vsqrt(v->x * v->x + v->y * v->y);
+	r->x = v->x / s; r->y = v->y / s;
 }
 
 // r = u + v
@@ -187,6 +187,20 @@ scalar vec2_dist(vec2 *u, vec2 *v)
 scalar vec2_dist1(vec2 *u, vec2 *v)
 {
 	return vabs(u->x - v->x) + vabs(u->y - v->y);
+}
+
+// r = projection of v wrt n
+void vec2_project(vec2 *r, vec2 *n, vec2 *v)
+{
+	scalar t = -(vec2_dot(n, v) / vec2_dot(n, n));
+	vec2_ma(r, v, t, n);
+}
+
+// r = reflection of v wrt n
+void vec2_reflect(vec2 *r, vec2 *n, vec2 *v)
+{
+	scalar t = -2 * (vec2_dot(n, v) / vec2_dot(n, n));
+	vec2_ma(r, v, t, n);
 }
 
 
@@ -251,8 +265,8 @@ void vec3_neg(vec3 *r, vec3 *v)
 // r = v / |v|  (possible division by 0)
 void vec3_normalize(vec3 *r, vec3 *v)
 {
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
-	r->x = s * v->x; r->y = s * v->y; r->z = s * v->z;
+	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	r->x = v->x / s; r->y = v->y / s; r->z = v->z / s;
 }
 
 // r = u + v
@@ -309,6 +323,20 @@ scalar vec3_dist(vec3 *u, vec3 *v)
 scalar vec3_dist1(vec3 *u, vec3 *v)
 {
 	return vabs(u->x - v->x) + vabs(u->y - v->y) + vabs(u->z - v->z);
+}
+
+// r = projection of v wrt n
+void vec3_project(vec3 *r, vec3 *n, vec3 *v)
+{
+	scalar t = -(vec3_dot(n, v) / vec3_dot(n, n));
+	vec3_ma(r, v, t, n);
+}
+
+// r = reflection of v wrt n
+void vec3_reflect(vec3 *r, vec3 *n, vec3 *v)
+{
+	scalar t = -2 * (vec3_dot(n, v) / vec3_dot(n, n));
+	vec3_ma(r, v, t, n);
 }
 
 
@@ -373,12 +401,12 @@ void vec4_neg(vec4 *r, vec4 *v)
 	r->z = -(v->z); r->w = -(v->w);
 }
 
-// r = v / |v| (possible divby0)
+// r = v / |v| (possible division by 0)
 void vec4_normalize(vec4 *r, vec4 *v)
 {
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = s * v->x; r->y = s * v->y;
-	r->z = s * v->z; r->w = s * v->w;
+	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = v->x / s; r->y = v->y / s;
+	r->z = v->z / s; r->w = v->w / s;
 }
 
 // r = u + v
@@ -445,6 +473,20 @@ scalar vec4_dist1(vec4 *u, vec4 *v)
 	     + vabs(u->z - v->z) + vabs(u->w - v->w);
 }
 
+// r = projection of v wrt n
+void vec4_project(vec4 *r, vec4 *n, vec4 *v)
+{
+	scalar t = -(vec4_dot(n, v) / vec4_dot(n, n));
+	vec4_ma(r, v, t, n);
+}
+
+// r = reflection of v wrt n
+void vec4_reflect(vec4 *r, vec4 *n, vec4 *v)
+{
+	scalar t = -2 * (vec4_dot(n, v) / vec4_dot(n, n));
+	vec4_ma(r, v, t, n);
+}
+
 
 // -------------------
 // --- vec convert ---
@@ -491,7 +533,7 @@ void vec4_eq_vec3(vec4 *r, vec3 *v)
 // ---- vec other ----
 // -------------------
 
-// = u x v (scalar since first 2 component is always 0)
+// = u x v (scalar since first 2 components are always 0)
 scalar vec2_cross(vec2 *u, vec2 *v)
 {
 	return u->x * v->y - u->y * v->x;
@@ -519,22 +561,20 @@ void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c)
 	p->w = vec3_dot(a, &n);
 }
 
-// r = projection of u on plane p
-void vec3_plane_project(vec3 *r, plane *p, vec3 *u)
+// r = projection of v wrt normal of p
+void vec3_plane_project(vec3 *r, plane *p, vec3 *v)
 {
 	vec3 n;
 	vec3_eq_vec4(&n, p);
-	scalar t = vec3_dot(&n, u) / vec3_dot(&n, &n) - p->w;
-	vec3_ma(r, u, -t, &n); // r = u - t * n
+	vec3_project(r, &n, v);
 }
 
-// r = projection of u on vec3 p (a plane containing origin)
-void vec3_project(vec3 *r, vec3 *p, vec3 *u)
+// r = reflection of v wrt normal of p
+void vec3_plane_reflect(vec3 *r, plane *p, vec3 *v)
 {
 	vec3 n;
-	vec3_copy(&n, p);
-	scalar t = vec3_dot(&n, u) / vec3_dot(&n, &n);
-	vec3_ma(r, u, -t, &n); // r = u - t * n
+	vec3_eq_vec4(&n, p);
+	vec3_reflect(r, &n, v);
 }
 
 // r = plane v with unit normal
@@ -1094,21 +1134,9 @@ void mat4_eq_mat3x4(mat4 *r, mat3x4 *m)
 // ----    quat   ----
 // -------------------
 
-// = |v|^2
-scalar quat_lensqr(quat *v)
-{
-	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
-}
-
 scalar quat_norm(quat *v)
 {
 	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
-}
-
-// = |v|
-scalar quat_len(quat *v)
-{
-	return vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
 }
 
 // r = 1
@@ -1117,51 +1145,12 @@ void quat_id(quat *v)
 	v->x = v->y = v->z = 0; v->w = 1;
 }
 
-// v = 0
-void quat_zero(quat *v)
-{
-	v->x = v->y = v->z = v->w = 0;
-}
-
-// v = {x, y, z, w}
-void quat_set(quat *v, scalar x, scalar y, scalar z, scalar w)
-{
-	v->x = x; v->y = y; v->z = z; v->w = w;
-}
-
-void quat_seta(quat *v, scalar *u)
-{
-	v->x = u[0]; v->y = u[1]; v->z = u[2]; v->w = u[3];
-}
-
-// r = v
-void quat_copy(quat *r, quat *v)
-{
-	r->x = v->x; r->y = v->y;
-	r->z = v->z; r->w = v->w;
-}
-
-// r = s * v
-void quat_scale(quat *r, scalar s, quat *v)
-{
-	r->x = s * v->x; r->y = s * v->y;
-	r->z = s * v->z; r->w = s * v->w;
-}
-
-// r = v / |v| (possible divby0)
-void quat_normalize(quat *r, quat *v)
-{
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = s * v->x; r->y = s * v->y;
-	r->z = s * v->z; r->w = s * v->w;
-}
-
 // r = v^-1 (possible divby0)
 void quat_inv(quat *r, quat *v)
 {
-	scalar s = 1 / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = -(s * v->x); r->y = -(s * v->y);
-	r->z = -(s * v->z); r->w =  (s * v->w);
+	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = -(v->x / s); r->y = -(v->y / s);
+	r->z = -(v->z / s); r->w =  (v->w / s);
 }
 
 // r = v'
