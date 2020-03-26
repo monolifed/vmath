@@ -1,5 +1,6 @@
 #include "vmath.h"
 
+
 #define VMATH_IMPLEMENTATION
 #include "vmath.h"
 

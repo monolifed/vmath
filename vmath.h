@@ -32,6 +32,11 @@ typedef struct vec4_s
 	scalar x, y, z, w;
 } vec4, quat, plane;
 
+typedef struct mat2x2_s
+{
+	vec2 a, b;
+} mat2, mat2x2;
+
 // a,b,c,d are rows of the matrix
 // i.e. row major matrix
 
@@ -141,6 +146,40 @@ VMATHDEF void vec3_plane_project(vec3 *r, plane *p, vec3 *v); // same as vec3_pr
 VMATHDEF void vec3_plane_reflect(vec3 *r, plane *p, vec3 *v); // same as vec3_reflect
 VMATHDEF void plane_normalize(plane *r, plane *v); // normalize the normal part
 
+
+// mat2 common
+VMATHDEF void mat2_zero(mat2 *m);
+VMATHDEF void mat2_id(mat2 *m);
+VMATHDEF void mat2_seta(mat2 *m, scalar *s);
+VMATHDEF void mat2_setv(mat2 *m, vec2 *a, vec2 *b);
+VMATHDEF void mat2_set_vec4(mat2 *m, vec4 *v); // m = v
+VMATHDEF void vec4_set_mat2(vec4 *v, mat2 *m); // v = m
+VMATHDEF void mat2_set(mat2 *r, mat2 *m);
+VMATHDEF void mat2_colx(vec2 *r, mat2 *m);
+VMATHDEF void mat2_coly(vec2 *r, mat2 *m);
+VMATHDEF void mat2_rowa(vec2 *r, mat2 *m); 
+VMATHDEF void mat2_rowb(vec2 *r, mat2 *m); 
+VMATHDEF void mat2_scale(mat2 *r, scalar s, mat2 *m);
+VMATHDEF void mat2_rsc(mat2 *r, mat2 *m, scalar a, scalar b);
+VMATHDEF void mat2_rsv(mat2 *r, mat2 *m, vec2 *v);
+VMATHDEF void mat2_neg(mat2 *r, mat2 *m);
+VMATHDEF void mat2_add(mat2 *r, mat2 *f, mat2 *g);
+VMATHDEF void mat2_sub(mat2 *r, mat2 *f, mat2 *g);
+VMATHDEF void mat2_tmul(mat2 *r, mat2 *f, mat2 *g);
+VMATHDEF void _vec2_mul_mat2(vec2 *r, vec2 *v, mat2 *m);
+VMATHDEF void mat2_mul(mat2 *r, mat2 *f, mat2 *g);
+VMATHDEF void mat2_ma(mat2 *r, mat2 *f, scalar t, mat2 *g);
+VMATHDEF void mat2_comb(mat2 *r, scalar s, mat2 *f, scalar t, mat2 *g);
+VMATHDEF void mat2_lerp(mat2 *r, mat2 *f, mat2 *g, scalar t);
+VMATHDEF void vec2_mul_mat2(vec2 *r, vec2 *v, mat2 *m);
+VMATHDEF void mat2_mul_vec2(vec2 *r, mat2 *m, vec2 *v);
+VMATHDEF void mat2_trans(mat2 *m);
+VMATHDEF void mat2_transpose(mat2 *r, mat2 *m);
+VMATHDEF void mat2_inverse(mat2 *r, mat2 *m);
+VMATHDEF void mat2_vtrace(vec2 *v, mat2 *m);
+VMATHDEF scalar mat2_trace(mat2 *m);
+VMATHDEF scalar mat2_det(mat2 *m);
+
 // mat3 common
 VMATHDEF void mat3_zero(mat3 *m); // m = 0
 VMATHDEF void mat3_id(mat3 *m); // m = I
@@ -169,6 +208,7 @@ VMATHDEF void vec3_mul_mat3(vec3 *r, vec3 *v, mat3 *m); // r = v * m
 VMATHDEF void mat3_mul_vec3(vec3 *r, mat3 *m, vec3 *v); // r = m * v
 VMATHDEF void mat3_trans(mat3 *m); // m = transpose(m)
 VMATHDEF void mat3_transpose(mat3 *r, mat3 *m); // r = transpose(m)
+VMATHDEF void mat3_inverse(mat3 *r, mat3 *m); // r = inverse(m)
 VMATHDEF void mat3_vtrace(vec3 *v, mat3 *m); // v = trace vector of m
 VMATHDEF scalar mat3_trace(mat3 *m); // return trace of m
 VMATHDEF scalar mat3_det(mat3 *m); // return det(m)
@@ -202,6 +242,7 @@ VMATHDEF void vec4_mul_mat3x4(vec4 *r, vec4 *v, mat3x4 *m);
 VMATHDEF void mat3x4_mul_vec4(vec4 *r, mat3x4 *m, vec4 *v);
 VMATHDEF void mat3x4_trans(mat3x4 *m);
 VMATHDEF void mat3x4_transpose(mat3x4 *r, mat3x4 *m);
+VMATHDEF void mat3x4_inverse(mat3x4 *r, mat3x4 *m);
 VMATHDEF void mat3x4_vtrace(vec3 *v, mat3x4 *m);
 VMATHDEF scalar mat3x4_trace(mat3x4 *m);
 VMATHDEF scalar mat3x4_det(mat3x4 *m);
@@ -236,6 +277,7 @@ VMATHDEF void vec4_mul_mat4(vec4 *r, vec4 *v, mat4 *m);
 VMATHDEF void mat4_mul_vec4(vec4 *r, mat4 *m, vec4 *v);
 VMATHDEF void mat4_trans(mat4 *m);
 VMATHDEF void mat4_transpose(mat4 *r, mat4 *m);
+VMATHDEF void mat4_inverse(mat4 *r, mat4 *m);
 VMATHDEF void mat4_vtrace(vec4 *v, mat4 *m);
 VMATHDEF scalar mat4_trace(mat4 *m);
 VMATHDEF scalar mat4_det(mat4 *m);
@@ -281,11 +323,13 @@ VMATHDEF void quat_from_mat3(quat *q, mat3 *m);
 #endif
 
 #ifndef VMATH_DOUBLEPREC
+#define VP(X) X##.0F
 #define vsqrt sqrtf
 #define vabs fabsf
 #define vsin sinf
 #define vcos cosf
 #else
+#define VP(X) X##.0
 #define vsqrt sqrt
 #define vabs fabs
 #define vsin sin
@@ -339,7 +383,7 @@ VMATHDEF scalar vec2_dist1(vec2 *u, vec2 *v)
 
 VMATHDEF void vec2_zero(vec2 *v)
 {
-	v->x = v->y = 0;
+	v->x = v->y = VP(0);
 }
 
 VMATHDEF void vec2_setc(vec2 *v, scalar x, scalar y)
@@ -370,8 +414,8 @@ VMATHDEF void vec2_neg(vec2 *r, vec2 *v)
 
 VMATHDEF void vec2_normalize(vec2 *r, vec2 *v)
 {
-	scalar s = vsqrt(v->x * v->x + v->y * v->y);
-	r->x = v->x / s; r->y = v->y / s;
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y);
+	r->x = v->x * s; r->y = v->y * s;
 }
 
 VMATHDEF void vec2_add(vec2 *r, vec2 *u, vec2 *v)
@@ -401,20 +445,20 @@ VMATHDEF void vec2_comb(vec2 *r, scalar s, vec2 *u, scalar t, vec2 *v)
 
 VMATHDEF void vec2_lerp(vec2 *r, vec2 *u, vec2 *v, scalar t)
 {
-	scalar s = 1 - t;
+	scalar s = VP(1) - t;
 	r->x = s * u->x + t * v->x; r->y = s * u->y + t * v->y;
 }
 
 VMATHDEF void vec2_project(vec2 *r, vec2 *n, vec2 *v)
 {
-	scalar t = -(vec2_dot(n, v) / vec2_dot(n, n));
-	vec2_ma(r, v, t, n);
+	scalar t = vec2_dot(n, v) / vec2_dot(n, n);
+	vec2_ma(r, v, -t, n);
 }
 
 VMATHDEF void vec2_reflect(vec2 *r, vec2 *n, vec2 *v)
 {
-	scalar t = -2 * (vec2_dot(n, v) / vec2_dot(n, n));
-	vec2_ma(r, v, t, n);
+	scalar t = vec2_dot(n, v) / vec2_dot(n, n);
+	vec2_ma(r, v, -t * VP(2), n);
 }
 
 
@@ -466,7 +510,7 @@ VMATHDEF scalar vec3_dist1(vec3 *u, vec3 *v)
 
 VMATHDEF void vec3_zero(vec3 *v)
 {
-	v->x = v->y = v->z = 0;
+	v->x = v->y = v->z = VP(0);
 }
 
 VMATHDEF void vec3_setc(vec3 *v, scalar x, scalar y, scalar z)
@@ -496,8 +540,8 @@ VMATHDEF void vec3_neg(vec3 *r, vec3 *v)
 
 VMATHDEF void vec3_normalize(vec3 *r, vec3 *v)
 {
-	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
-	r->x = v->x / s; r->y = v->y / s; r->z = v->z / s;
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	r->x = v->x * s; r->y = v->y * s; r->z = v->z * s;
 }
 
 VMATHDEF void vec3_add(vec3 *r, vec3 *u, vec3 *v)
@@ -528,21 +572,21 @@ VMATHDEF void vec3_comb(vec3 *r, scalar s, vec3 *u, scalar t, vec3 *v)
 
 VMATHDEF void vec3_lerp(vec3 *r, vec3 *u, vec3 *v, scalar t)
 {
-	scalar s = 1 - t;
+	scalar s = VP(1) - t;
 	r->x = s * u->x + t * v->x; r->y = s * u->y + t * v->y;
 	r->z = s * u->z + t * v->z;
 }
 
 VMATHDEF void vec3_project(vec3 *r, vec3 *n, vec3 *v)
 {
-	scalar t = -(vec3_dot(n, v) / vec3_dot(n, n));
-	vec3_ma(r, v, t, n);
+	scalar t = vec3_dot(n, v) / vec3_dot(n, n);
+	vec3_ma(r, v, -t, n);
 }
 
 VMATHDEF void vec3_reflect(vec3 *r, vec3 *n, vec3 *v)
 {
-	scalar t = -2 * (vec3_dot(n, v) / vec3_dot(n, n));
-	vec3_ma(r, v, t, n);
+	scalar t = vec3_dot(n, v) / vec3_dot(n, n);
+	vec3_ma(r, v, -t * VP(2), n);
 }
 
 
@@ -631,9 +675,9 @@ VMATHDEF void vec4_neg(vec4 *r, vec4 *v)
 
 VMATHDEF void vec4_normalize(vec4 *r, vec4 *v)
 {
-	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = v->x / s; r->y = v->y / s;
-	r->z = v->z / s; r->w = v->w / s;
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = v->x * s; r->y = v->y * s;
+	r->z = v->z * s; r->w = v->w * s;
 }
 
 VMATHDEF void vec4_add(vec4 *r, vec4 *u, vec4 *v)
@@ -668,21 +712,21 @@ VMATHDEF void vec4_comb(vec4 *r, scalar s, vec4 *u, scalar t, vec4 *v)
 
 VMATHDEF void vec4_lerp(vec4 *r, vec4 *u, vec4 *v, scalar t)
 {
-	scalar s = 1 - t;
+	scalar s = VP(1) - t;
 	r->x = s * u->x + t * v->x; r->y = s * u->y + t * v->y;
 	r->z = s * u->z + t * v->z; r->w = s * u->w + t * v->w;
 }
 
 VMATHDEF void vec4_project(vec4 *r, vec4 *n, vec4 *v)
 {
-	scalar t = -(vec4_dot(n, v) / vec4_dot(n, n));
-	vec4_ma(r, v, t, n);
+	scalar t = vec4_dot(n, v) / vec4_dot(n, n);
+	vec4_ma(r, v, -t, n);
 }
 
 VMATHDEF void vec4_reflect(vec4 *r, vec4 *n, vec4 *v)
 {
-	scalar t = -2 * (vec4_dot(n, v) / vec4_dot(n, n));
-	vec4_ma(r, v, t, n);
+	scalar t = vec4_dot(n, v) / vec4_dot(n, n);
+	vec4_ma(r, v, -t * VP(2), n);
 }
 
 
@@ -701,7 +745,7 @@ VMATHDEF void vec2_set_vec4(vec2 *r, vec4 *v)
 
 VMATHDEF void vec3_set_vec2(vec3 *r, vec2 *v)
 {
-	r->x = v->x; r->y = v->y; r->z = 0; 
+	r->x = v->x; r->y = v->y; r->z = VP(0); 
 }
 
 VMATHDEF void vec3_set_vec4(vec3 *r, vec4 *v)
@@ -711,12 +755,12 @@ VMATHDEF void vec3_set_vec4(vec3 *r, vec4 *v)
 
 VMATHDEF void vec4_set_vec2(vec4 *r, vec2 *v)
 {
-	r->x = v->x; r->y = v->y; r->z = r->w = 0; 
+	r->x = v->x; r->y = v->y; r->z = r->w = VP(0); 
 }
 
 VMATHDEF void vec4_set_vec3(vec4 *r, vec3 *v)
 {
-	r->x = v->x; r->y = v->y; r->z = v->z; r->w = 0; 
+	r->x = v->x; r->y = v->y; r->z = v->z; r->w = VP(0); 
 }
 
 
@@ -743,7 +787,7 @@ VMATHDEF void vec4_cross(vec4 *r, vec4 *u, vec4 *v)
 	x = u->y * v->z - u->z * v->y;
 	y = u->z * v->x - u->x * v->z;
 	z = u->x * v->y - u->y * v->x;
-	r->x = x; r->y = y; r->z = z; r->w = 0;
+	r->x = x; r->y = y; r->z = z; r->w = VP(0);
 }
 
 VMATHDEF void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c)
@@ -773,9 +817,188 @@ VMATHDEF void vec3_plane_reflect(vec3 *r, plane *p, vec3 *v)
 
 VMATHDEF void plane_normalize(plane *r, plane *v)
 {
-	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
-	r->x = v->x / s; r->y = v->y / s; r->z = v->z / s;
-	r->w = s * v->w;
+	scalar t = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	scalar s = VP(1) / t;
+	r->x = v->x * s; r->y = v->y * s; r->z = v->z * s;
+	r->w = t * v->w;
+}
+
+
+// ---------------------
+// --- mat2x2 common ---
+// ---------------------
+VMATHDEF void mat2_zero(mat2 *m)
+{
+	memset(m, 0, sizeof *m);
+}
+
+VMATHDEF void mat2_id(mat2 *m)
+{
+	memset(m, 0, sizeof *m);
+	m->a.x = m->b.y = VP(1);
+}
+
+VMATHDEF void mat2_seta(mat2 *m, scalar *s)
+{
+	memcpy(m, s, sizeof *m);
+}
+
+VMATHDEF void mat2_setv(mat2 *m, vec2 *a, vec2 *b)
+{
+	vec2_set(&m->a, a);
+	vec2_set(&m->b, b);
+}
+
+VMATHDEF void mat2_set_vec4(mat2 *m, vec4 *v)
+{
+	vec2_setc(&m->a, v->x, v->y);
+	vec2_setc(&m->b, v->z, v->w);
+}
+
+VMATHDEF void vec4_set_mat2(vec4 *v, mat2 *m)
+{
+	vec4_setc(v, m->a.x, m->a.y, m->b.x, m->b.y);
+}
+
+VMATHDEF void mat2_set(mat2 *r, mat2 *m)
+{
+	memcpy(r, m, sizeof *m);
+}
+
+VMATHDEF void mat2_colx(vec2 *r, mat2 *m) { vec2_setc(r, m->a.x, m->b.x); }
+VMATHDEF void mat2_coly(vec2 *r, mat2 *m) { vec2_setc(r, m->a.y, m->b.y); }
+VMATHDEF void mat2_rowa(vec2 *r, mat2 *m) { vec2_set(r, &m->a); }
+VMATHDEF void mat2_rowb(vec2 *r, mat2 *m) { vec2_set(r, &m->b); }
+
+VMATHDEF void mat2_scale(mat2 *r, scalar s, mat2 *m)
+{
+	vec2_scale(&r->a, s, &m->a);
+	vec2_scale(&r->b, s, &m->b);
+}
+
+VMATHDEF void mat2_rsc(mat2 *r, mat2 *m, scalar a, scalar b)
+{
+	vec2_scale(&r->a, a, &m->a);
+	vec2_scale(&r->b, b, &m->b);
+}
+
+VMATHDEF void mat2_rsv(mat2 *r, mat2 *m, vec2 *v)
+{
+	vec2_scale(&r->a, v->x, &m->a);
+	vec2_scale(&r->b, v->y, &m->b);
+}
+
+VMATHDEF void mat2_neg(mat2 *r, mat2 *m)
+{
+	vec2_neg(&r->a, &m->a);
+	vec2_neg(&r->b, &m->b);
+}
+
+VMATHDEF void mat2_add(mat2 *r, mat2 *f, mat2 *g)
+{
+	vec2_add(&r->a, &f->a, &g->a);
+	vec2_add(&r->b, &f->b, &g->b);
+}
+
+VMATHDEF void mat2_sub(mat2 *r, mat2 *f, mat2 *g)
+{
+	vec2_sub(&r->a, &f->a, &g->a);
+	vec2_sub(&r->b, &f->b, &g->b);
+}
+
+VMATHDEF void mat2_tmul(mat2 *r, mat2 *f, mat2 *g)
+{
+	vec2_tmul(&r->a, &f->a, &g->a);
+	vec2_tmul(&r->b, &f->b, &g->b);
+}
+
+VMATHDEF void _vec2_mul_mat2(vec2 *r, vec2 *v, mat2 *m)
+{
+	r->x = m->a.x * v->x + m->b.x * v->y;
+	r->y = m->a.y * v->x + m->b.y * v->y;
+}
+
+VMATHDEF void mat2_mul(mat2 *r, mat2 *f, mat2 *g)
+{
+	mat2 m;
+	_vec2_mul_mat2(&m.a, &f->a, g);
+	_vec2_mul_mat2(&m.b, &f->b, g);
+	memcpy(r, &m, sizeof m);
+}
+
+VMATHDEF void mat2_ma(mat2 *r, mat2 *f, scalar t, mat2 *g)
+{
+	vec2_ma(&r->a, &f->a, t, &g->a);
+	vec2_ma(&r->b, &f->b, t, &g->b);
+}
+
+VMATHDEF void mat2_comb(mat2 *r, scalar s, mat2 *f, scalar t, mat2 *g)
+{
+	vec2_comb(&r->a, s, &f->a, t, &g->a);
+	vec2_comb(&r->b, s, &f->b, t, &g->b);
+}
+
+VMATHDEF void mat2_lerp(mat2 *r, mat2 *f, mat2 *g, scalar t)
+{
+	scalar s = VP(1) - t;
+	vec2_comb(&r->a, s, &f->a, t, &g->a);
+	vec2_comb(&r->b, s, &f->b, t, &g->b);
+}
+
+VMATHDEF void vec2_mul_mat2(vec2 *r, vec2 *v, mat2 *m)
+{
+	scalar x, y;
+	x = m->a.x * v->x + m->b.x * v->y;
+	y = m->a.y * v->x + m->b.y * v->y;
+	r->x = x; r->y = y;
+}
+
+VMATHDEF void mat2_mul_vec2(vec2 *r, mat2 *m, vec2 *v)
+{
+	scalar x, y;
+	x = m->a.x * v->x + m->a.y * v->y;
+	y = m->b.x * v->x + m->b.y * v->y;
+	r->x = x; r->y = y;
+}
+
+VMATHDEF void mat2_trans(mat2 *m)
+{
+	scalar t;
+	t = m->a.y; m->a.y = m->b.x; m->b.x = t;
+}
+
+VMATHDEF void mat2_transpose(mat2 *r, mat2 *m)
+{
+	scalar t;
+	t = m->a.y; r->a.y = m->b.x; r->b.x = t;
+	
+	r->a.x = m->a.x; r->b.y = m->b.y;
+}
+
+VMATHDEF void mat2_vtrace(vec2 *v, mat2 *m)
+{
+	v->x = m->a.x; v->y = m->b.y;;
+}
+
+VMATHDEF scalar mat2_trace(mat2 *m)
+{
+	return m->a.x + m->b.y;
+}
+
+VMATHDEF scalar mat2_det(mat2 *m)
+{
+	return m->a.x * m->b.y - m->a.y * m->b.x;
+}
+
+VMATHDEF void mat2_inverse(mat2 *r, mat2 *m)
+{
+	scalar invdet = VP(1) / (m->a.x * m->b.y - m->a.y * m->b.x);
+	
+	r->a.x =  m->b.y * invdet;
+	r->a.y = -m->a.y * invdet;
+	
+	r->b.x = -m->b.x * invdet;
+	r->b.y =  m->a.x * invdet;
 }
 
 
@@ -790,7 +1013,7 @@ VMATHDEF void mat3_zero(mat3 *m)
 VMATHDEF void mat3_id(mat3 *m)
 {
 	memset(m, 0, sizeof *m);
-	m->a.x = m->b.y = m->c.z = 1;
+	m->a.x = m->b.y = m->c.z = VP(1);
 }
 
 VMATHDEF void mat3_seta(mat3 *m, scalar *s)
@@ -898,7 +1121,7 @@ VMATHDEF void mat3_comb(mat3 *r, scalar s, mat3 *f, scalar t, mat3 *g)
 
 VMATHDEF void mat3_lerp(mat3 *r, mat3 *f, mat3 *g, scalar t)
 {
-	scalar s = 1 - t;
+	scalar s = VP(1) - t;
 	vec3_comb(&r->a, s, &f->a, t, &g->a);
 	vec3_comb(&r->b, s, &f->b, t, &g->b);
 	vec3_comb(&r->c, s, &f->c, t, &g->c);
@@ -954,11 +1177,33 @@ VMATHDEF scalar mat3_trace(mat3 *m)
 
 VMATHDEF scalar mat3_det(mat3 *m)
 {
-	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+	return
+	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
 }
 
+VMATHDEF void mat3_inverse(mat3 *r, mat3 *m)
+{
+	scalar rc0, rc1, rc2, invdet;
+	rc0 =  m->b.x * m->c.y - m->b.y * m->c.x;
+	rc1 = -m->a.x * m->c.y + m->a.y * m->c.x;
+	rc2 =  m->a.x * m->b.y - m->a.y * m->b.x;
+	
+	invdet = VP(1) / (rc2 * m->c.z + rc1 * m->b.z + rc0 * m->a.z);
+	
+	r->a.x = ( m->b.y * m->c.z - m->b.z * m->c.y) * invdet;
+	r->a.y = (-m->a.y * m->c.z + m->a.z * m->c.y) * invdet;
+	r->a.z = ( m->a.y * m->b.z - m->a.z * m->b.y) * invdet;
+	
+	r->b.x = (-m->b.x * m->c.z + m->b.z * m->c.x) * invdet;
+	r->b.y = ( m->a.x * m->c.z - m->a.z * m->c.x) * invdet;
+	r->b.z = (-m->a.x * m->b.z + m->a.z * m->b.x) * invdet;
+	
+	r->c.x = rc0 * invdet;
+	r->c.y = rc1 * invdet;
+	r->c.z = rc2 * invdet;
+}
 
 // ---------------------
 // --- mat3x4 common ---
@@ -971,7 +1216,7 @@ VMATHDEF void mat3x4_zero(mat3x4 *m)
 VMATHDEF void mat3x4_id(mat3x4 *m)
 {
 	memset(m, 0, sizeof *m);
-	m->a.x = m->b.y = m->c.z = 1;
+	m->a.x = m->b.y = m->c.z = VP(1);
 }
 
 VMATHDEF void mat3x4_seta(mat3x4 *m, scalar *s)
@@ -1140,9 +1385,42 @@ VMATHDEF scalar mat3x4_trace(mat3x4 *m)
 
 VMATHDEF scalar mat3x4_det(mat3x4 *m)
 {
-	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+	return
+	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+}
+
+VMATHDEF void mat3x4_inverse(mat3x4 *r, mat3x4 *m)
+{
+	float rc0, rc1, rc2;
+	float a, b, c;
+	float invdet;
+	
+	rc0 =  m->b.x * m->c.y - m->b.y * m->c.x;
+	rc1 = -m->a.x * m->c.y + m->a.y * m->c.x;
+	rc2 =  m->a.x * m->b.y - m->a.y * m->b.x;
+	
+	a = m->b.z * m->c.w - m->b.w * m->c.z;
+	b = m->a.z * m->c.w - m->a.w * m->c.z;
+	c = m->a.z * m->b.w - m->a.w * m->b.z;
+	
+	invdet = VP(1) / (rc2 * m->c.z + rc1 * m->b.z + rc0 * m->a.z);
+	
+	r->a.x = ( m->b.y * m->c.z - m->c.y * m->b.z) * invdet;
+	r->a.y = (-m->a.y * m->c.z + m->c.y * m->a.z) * invdet;
+	r->a.z = ( m->a.y * m->b.z - m->b.y * m->a.z) * invdet;
+	r->a.w = (-m->a.y * a + m->b.y * b - m->c.y * c) * invdet;
+	
+	r->b.x = (-m->b.x * m->c.z + m->c.x * m->b.z) * invdet;
+	r->b.y = ( m->a.x * m->c.z - m->c.x * m->a.z) * invdet;
+	r->b.z = (-m->a.x * m->b.z + m->b.x * m->a.z) * invdet;
+	r->b.w = ( m->a.x * a - m->b.x * b + m->c.x * c) * invdet;
+	
+	r->c.x = rc0 * invdet;
+	r->c.y = rc1 * invdet;
+	r->c.z = rc2 * invdet;
+	r->c.w = -(m->a.w * rc0 + m->b.w * rc1 + m->c.w * rc2) * invdet;
 }
 
 // ---------------------
@@ -1341,25 +1619,68 @@ VMATHDEF scalar mat4_trace(mat4 *m)
 	return m->a.x + m->b.y + m->c.z + m->d.w;
 }
 
-#define VDET2(a,b, c,d) ((a)*(d) - (b)*(c))
-#define VDET3(a,b,c, d,e,f, g,h,i) \
-	((a)*VDET2(e,f,h,i) - (b)*VDET2(d,f,g,i) + (c)*VDET2(d,e,g,h))
-VMATHDEF scalar mat4_det(mat4 *m)
-{
-	scalar s = 0;
-	s += m->a.x * VDET3(m->b.y, m->b.z, m->b.w, m->c.y, m->c.z, m->c.w, m->d.y, m->d.z, m->d.w);
-	s -= m->a.y * VDET3(m->b.x, m->b.z, m->b.w, m->c.x, m->c.z, m->c.w, m->d.x, m->d.z, m->d.w);
-	s += m->a.z * VDET3(m->b.x, m->b.y, m->b.w, m->c.x, m->c.y, m->c.w, m->d.x, m->d.y, m->d.w);
-	s -= m->a.w * VDET3(m->b.x, m->b.y, m->b.z, m->c.x, m->c.y, m->c.z, m->d.x, m->d.y, m->d.z);
-	return s;
-}
-
 VMATHDEF scalar mat4_det3(mat4 *m)
 {
-	return m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	     - m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	     + m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+	return
+	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
+	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
+	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
 }
+
+VMATHDEF scalar mat4_det(mat4 *m)
+{
+	return 
+	  (m->a.x * m->b.y - m->a.y * m->b.x) * (m->c.z * m->d.w - m->c.w * m->d.z)
+	- (m->a.x * m->c.y - m->a.y * m->c.x) * (m->b.z * m->d.w - m->b.w * m->d.z)
+	+ (m->a.x * m->d.y - m->a.y * m->d.x) * (m->b.z * m->c.w - m->b.w * m->c.z)
+	+ (m->b.x * m->c.y - m->b.y * m->c.x) * (m->a.z * m->d.w - m->a.w * m->d.z)
+	- (m->b.x * m->d.y - m->b.y * m->d.x) * (m->a.z * m->c.w - m->a.w * m->c.z)
+	+ (m->c.x * m->d.y - m->c.y * m->d.x) * (m->a.z * m->b.w - m->a.w * m->b.z);
+}
+
+VMATHDEF void mat4_inverse(mat4 *r, mat4 *m)
+{
+	float s0, s1, s2, s3, s4, s5;
+	float c0, c1, c2, c3, c4, c5;
+	float invdet;
+	
+	s0 = m->a.x * m->b.y - m->a.y * m->b.x;
+	s1 = m->a.x * m->c.y - m->a.y * m->c.x;
+	s2 = m->a.x * m->d.y - m->a.y * m->d.x;
+	s3 = m->b.x * m->c.y - m->b.y * m->c.x;
+	s4 = m->b.x * m->d.y - m->b.y * m->d.x;
+	s5 = m->c.x * m->d.y - m->c.y * m->d.x;
+
+	c0 = m->a.z * m->b.w - m->a.w * m->b.z;
+	c1 = m->a.z * m->c.w - m->a.w * m->c.z;
+	c2 = m->a.z * m->d.w - m->a.w * m->d.z;
+	c3 = m->b.z * m->c.w - m->b.w * m->c.z;
+	c4 = m->b.z * m->d.w - m->b.w * m->d.z;
+	c5 = m->c.z * m->d.w - m->c.w * m->d.z;
+	
+	invdet = VP(1) / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
+	
+	r->a.x = ( m->b.y * c5 - m->c.y * c4 + m->d.y * c3) * invdet;
+	r->a.y = (-m->a.y * c5 + m->c.y * c2 - m->d.y * c1) * invdet;
+	r->a.z = ( m->a.y * c4 - m->b.y * c2 + m->d.y * c0) * invdet;
+	r->a.w = (-m->a.y * c3 + m->b.y * c1 - m->c.y * c0) * invdet;
+	
+	r->b.x = (-m->b.x * c5 + m->c.x * c4 - m->d.x * c3) * invdet;
+	r->b.y = ( m->a.x * c5 - m->c.x * c2 + m->d.x * c1) * invdet;
+	r->b.z = (-m->a.x * c4 + m->b.x * c2 - m->d.x * c0) * invdet;
+	r->b.w = ( m->a.x * c3 - m->b.x * c1 + m->c.x * c0) * invdet;
+	
+	r->c.x = ( m->b.w * s5 - m->c.w * s4 + m->d.w * s3) * invdet;
+	r->c.y = (-m->a.w * s5 + m->c.w * s2 - m->d.w * s1) * invdet;
+	r->c.z = ( m->a.w * s4 - m->b.w * s2 + m->d.w * s0) * invdet;
+	r->c.w = (-m->a.w * s3 + m->b.w * s1 - m->c.w * s0) * invdet;
+	
+	r->d.x = (-m->b.z * s5 + m->c.z * s4 - m->d.z * s3) * invdet;
+	r->d.y = ( m->a.z * s5 - m->c.z * s2 + m->d.z * s1) * invdet;
+	r->d.z = (-m->a.z * s4 + m->b.z * s2 - m->d.z * s0) * invdet;
+	r->d.w = ( m->a.z * s3 - m->b.z * s1 + m->c.z * s0) * invdet;
+}
+
 
 // -----------------------
 // --- mat conversions ---
@@ -1398,7 +1719,7 @@ VMATHDEF void mat4_set_mat3(mat4 *r, mat3 *m)
 	vec4_set_vec3(&r->a, &m->a);
 	vec4_set_vec3(&r->b, &m->b);
 	vec4_set_vec3(&r->c, &m->c);
-	vec4_setc(&r->d, 0, 0, 0, 1);
+	vec4_setc(&r->d, VP(0), VP(0), VP(0), VP(1));
 }
 
 VMATHDEF void mat4_set_mat3x4(mat4 *r, mat3x4 *m)
@@ -1406,7 +1727,7 @@ VMATHDEF void mat4_set_mat3x4(mat4 *r, mat3x4 *m)
 	vec4_set(&r->a, &m->a);
 	vec4_set(&r->b, &m->b);
 	vec4_set(&r->c, &m->c);
-	vec4_setc(&r->d, 0, 0, 0, 1);
+	vec4_setc(&r->d, VP(0), VP(0), VP(0), VP(1));
 }
 
 
@@ -1421,14 +1742,14 @@ VMATHDEF scalar quat_norm(quat *v)
 
 VMATHDEF void quat_id(quat *v)
 {
-	v->x = v->y = v->z = 0; v->w = 1;
+	v->x = v->y = v->z = VP(0); v->w = VP(1);
 }
 
 VMATHDEF void quat_inv(quat *r, quat *v)
 {
-	scalar s = vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-	r->x = -(v->x / s); r->y = -(v->y / s);
-	r->z = -(v->z / s); r->w =  (v->w / s);
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	r->x = -v->x * s; r->y = -v->y * s;
+	r->z = -v->z * s; r->w =  v->w * s;
 }
 
 VMATHDEF void quat_conj(quat *r, quat *v)
@@ -1440,7 +1761,7 @@ VMATHDEF void quat_conj(quat *r, quat *v)
 VMATHDEF void quat_set_vec3(quat *r, vec3 *v)
 {
 	r->x = v->x; r->y = v->y;
-	r->z = v->z; r->w = 0;
+	r->z = v->z; r->w = VP(0);
 }
 
 VMATHDEF void vec3_set_quat(vec3 *r, quat *v)
@@ -1492,56 +1813,77 @@ VMATHDEF void mat3_from_quat(mat3 *m, quat *q)
 {
 	scalar x = q->x, y = q->y, z = q->z, w = q->w;
 	
-	m->a.x = 1 - 2 * (y * y + z * z);
-	m->a.y = 2 * (x * y + z * w);
-	m->a.z = 2 * (x * z - y * w);
+	m->a.x = VP(1) - VP(2) * (y * y + z * z);
+	m->a.y = VP(2) * (x * y - z * w);
+	m->a.z = VP(2) * (x * z + y * w);
 	
-	m->b.x = 2 * (x * y - z * w);
-	m->b.y = 1 - 2 * (x * x + z * z);
-	m->b.z = 2 * (y * z + x * w);
+	m->b.x = VP(2) * (x * y + z * w);
+	m->b.y = VP(1) - VP(2) * (x * x + z * z);
+	m->b.z = VP(2) * (y * z - x * w);
 	
-	m->c.x = 2 * (x * z + y * w);
-	m->c.y = 2 * (y * z - x * w);
-	m->c.z = 1 - 2 * (x * x + y * y);
+	m->c.x = VP(2) * (x * z - y * w);
+	m->c.y = VP(2) * (y * z + x * w);
+	m->c.z = VP(1) - VP(2) * (x * x + y * y);
+}
+
+VMATHDEF void mat3x4_from_qst(mat3x4 *m, quat *q, vec3 *s, vec3 *t)
+{
+	scalar x = q->x, y = q->y, z = q->z, w = q->w;
+	
+	m->a.x = s->x * (VP(1) - VP(2) * (y * y + z * z));
+	m->a.y = s->y * VP(2) * (x * y - z * w);
+	m->a.z = s->z * VP(2) * (x * z + y * w);
+	m->a.w = t->x;
+	
+	m->b.x = s->x * VP(2) * (x * y + z * w);
+	m->b.y = s->y * (VP(1) - VP(2) * (x * x + z * z));
+	m->b.z = s->z * VP(2) * (y * z - x * w);
+	m->b.w = t->y;
+	
+	m->c.x = s->x * VP(2) * (x * z - y * w);
+	m->c.y = s->y * VP(2) * (y * z + x * w);
+	m->c.z = s->z * (VP(1) - VP(2) * (x * x + y * y));
+	m->c.w = t->z;
 }
 
 VMATHDEF void quat_from_mat3(quat *q, mat3 *m)
 {
 	scalar t, x,y,z,w;
 	scalar tr0 = m->a.x, tr1 = m->b.y, tr2 = m->c.z;
-	if (tr0 < 0)
+	if (tr2 < 0)
 	{
 		if (tr0 > tr1)
 		{
-			t = 1 + tr0 - tr1 - tr2;
+			t = VP(1) + tr0 - tr1 - tr2;
 			x = t;               y = m->a.y + m->b.x;
-			z = m->c.x + m->a.z; w = m->b.z - m->c.y;
+			z = m->c.x + m->a.z; w = m->c.y - m->b.z;
 		}
 		else
 		{
-			t = 1 - tr0 + tr1 - tr2;
+			t = VP(1) - tr0 + tr1 - tr2;
 			x = m->a.y + m->b.x; y = t;
-			z = m->b.z + m->c.y; w = m->c.x - m->a.z;
+			z = m->b.z + m->c.y; w = m->a.z - m->c.x;
 		}
 	}
 	else
 	{
 		if (tr0 < -tr1)
 		{
-			t = 1 - tr0 - tr1 + tr2;
+			t = VP(1) - tr0 - tr1 + tr2;
 			x = m->c.x + m->a.z;  y = m->b.z + m->c.y;
-			z = t;                w = m->a.y - m->b.x;
+			z = t;                w = m->b.x - m->a.y;
 		}
 		else
 		{
-			t = 1 + tr0 + tr1 + tr2;
-			x = m->b.z - m->c.y; y = m->c.x - m->a.z;
-			y = m->a.y - m->b.x; w = t;
+			t = VP(1) + tr0 + tr1 + tr2;
+			x = m->c.y - m->b.z; y = m->a.z - m->c.x;
+			y = m->b.x - m->a.y; w = t;
 		}
 	}
 	
-	t = 0.5 / vsqrt(t);
+	t = VP(1) / (VP(2) * vsqrt(t));
 	q->x = t * x; q->y = t * y; q->z = t * z; q->w = t * w;
 }
+
 
 #endif // VMATH_IMPLEMENTATION
