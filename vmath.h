@@ -149,7 +149,8 @@ VMATHDEF void vec4_cross(vec4 *r, vec4 *u, vec4 *v); // ignores last component
 VMATHDEF void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c);
 VMATHDEF void vec3_plane_project(vec3 *r, vec3 *v, plane *p); // same as vec3_project (p has unit normal)
 VMATHDEF void vec3_plane_reflect(vec3 *r, vec3 *v, plane *p); // same as vec3_reflect
-VMATHDEF void plane_normalize(plane *r, plane *v); // normalize the normal part
+VMATHDEF void plane_normalize(plane *r, plane *v); // normalize the normal 
+VMATHDEF void plane_norm(plane *p); // normalize the normal in place
 
 
 // mat2 common
@@ -308,6 +309,7 @@ VMATHDEF void mat4_set_mat3x4(mat4 *r, mat3x4 *m);
 
 // quat common (also vec4)
 VMATHDEF void quat_id(quat *v); // q = 1
+VMATHDEF void quat_from_rot(quat *r, vec3 *v, scalar a); // q = rotation around axis:v with angle:a
 VMATHDEF void quat_inv(quat *r, quat *v); // r = inverse of q
 VMATHDEF void quat_conj(quat *r, quat *v); // r = conjugate of q
 VMATHDEF void quat_set_vec3(quat *q, vec3 *v); // q = v ({x, y, z, 0})
@@ -1876,9 +1878,10 @@ VMATHDEF void quat_id(quat *v)
 
 VMATHDEF void quat_from_rot(quat *r, vec3 *v, scalar a)
 {
-	scalar s = vsin(a / 2) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	a = a / VP(2);
+	scalar s = vsin(a) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 	r->x = v->x * s; r->y = v->y * s; r->z = v->z * s;
-	r->w = vcos(a / 2);
+	r->w = vcos(a);
 }
 
 VMATHDEF void quat_inv(quat *r, quat *v)
@@ -2045,7 +2048,7 @@ VMATHDEF void mat3_from_dir(mat3 *m, vec3 *dir)
 }
 
 
-VMATHDEF void mat4_rot_axis(mat4 *m, vec3 *u, scalar *a)
+VMATHDEF void mat4_rot_axis(mat4 *m, vec3 *u, scalar a)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
@@ -2065,7 +2068,7 @@ VMATHDEF void mat4_rot_axis(mat4 *m, vec3 *u, scalar *a)
 	m->d.x = VP(0);    m->d.y = VP(0);    m->d.z = VP(0);    m->d.w = VP(1);
 }
 
-VMATHDEF void mat3x4_rot_axis(mat3x4 *m, vec3 *u, scalar *a)
+VMATHDEF void mat3x4_rot_axis(mat3x4 *m, vec3 *u, scalar a)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
@@ -2084,7 +2087,7 @@ VMATHDEF void mat3x4_rot_axis(mat3x4 *m, vec3 *u, scalar *a)
 	m->c.x = dxz - sy; m->c.y = dyz + sx; m->c.z = c + dzz;  m->c.w = VP(0);
 }
 
-VMATHDEF void mat3_rot_axis(mat3 *m, vec3 *u, scalar *a)
+VMATHDEF void mat3_rot_axis(mat3 *m, vec3 *u, scalar a)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
