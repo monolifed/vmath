@@ -25,7 +25,7 @@ typedef struct vec3_s
 
 // plane: x,y,z is unit normal
 //        w is (signed) distance in normal direction
-// quat: x,y,z is i,j,k components, w is real comp.
+// quat: x,y,z is i,j,k components, w is real component
 
 typedef struct vec4_s
 {
@@ -39,6 +39,8 @@ typedef struct mat2x2_s
 
 // a,b,c,d are rows of the matrix
 // i.e. row major matrix
+// However we use v' = Mv
+// i.e. pre-multiplied
 
 typedef struct mat3x3_s
 {
@@ -66,6 +68,7 @@ VMATHDEF scalar vec2_distsqr(vec2 *u, vec2 *v); // return (u - v) . (u - v)
 VMATHDEF scalar vec2_dist(vec2 *u, vec2 *v); // return |u - v|
 VMATHDEF scalar vec2_dist1(vec2 *u, vec2 *v); // return d1(u, v)
 VMATHDEF void vec2_zero(vec2 *v); // v = 0
+VMATHDEF void vec2_norm(vec2 *v); // v = v / |v| (possible div. by 0)
 VMATHDEF void vec2_setc(vec2 *v, scalar x, scalar y); // v = {x, y}
 VMATHDEF void vec2_seta(vec2 *v, scalar *u); // v = {u}
 VMATHDEF void vec2_set(vec2 *r, vec2 *v); // v = u
@@ -78,8 +81,8 @@ VMATHDEF void vec2_tmul(vec2 *r, vec2 *u, vec2 *v); // r = u * v (term-wise mult
 VMATHDEF void vec2_ma(vec2 *r, vec2 *u, scalar t, vec2 *v); // r = u + t * v
 VMATHDEF void vec2_comb(vec2 *r, scalar s, vec2 *u, scalar t, vec2 *v); // r = s * u + t * v (linear combination)
 VMATHDEF void vec2_lerp(vec2 *r, vec2 *u, vec2 *v, scalar t); // r = (1-t) * u + t * v
-VMATHDEF void vec2_project(vec2 *r, vec2 *n, vec2 *v); // r = proj. of v wrt n
-VMATHDEF void vec2_reflect(vec2 *r, vec2 *n, vec2 *v); // r = refl. of v wrt n
+VMATHDEF void vec2_project(vec2 *r, vec2 *v, vec2 *n); // r = proj. of v wrt n (unit)
+VMATHDEF void vec2_reflect(vec2 *r, vec2 *v, vec2 *n); // r = refl. of v wrt n (unit)
 
 // vec3 common
 VMATHDEF scalar vec3_dot(vec3 *u, vec3 *v);
@@ -90,6 +93,7 @@ VMATHDEF scalar vec3_distsqr(vec3 *u, vec3 *v);
 VMATHDEF scalar vec3_dist(vec3 *u, vec3 *v);
 VMATHDEF scalar vec3_dist1(vec3 *u, vec3 *v);
 VMATHDEF void vec3_zero(vec3 *v);
+VMATHDEF void vec3_norm(vec3 *v);
 VMATHDEF void vec3_setc(vec3 *v, scalar x, scalar y, scalar z);
 VMATHDEF void vec3_seta(vec3 *v, scalar *u);
 VMATHDEF void vec3_set(vec3 *r, vec3 *v);
@@ -102,8 +106,8 @@ VMATHDEF void vec3_tmul(vec3 *r, vec3 *u, vec3 *v);
 VMATHDEF void vec3_ma(vec3 *r, vec3 *u, scalar t, vec3 *v);
 VMATHDEF void vec3_comb(vec3 *r, scalar s, vec3 *u, scalar t, vec3 *v);
 VMATHDEF void vec3_lerp(vec3 *r, vec3 *u, vec3 *v, scalar t);
-VMATHDEF void vec3_project(vec3 *r, vec3 *n, vec3 *v);
-VMATHDEF void vec3_reflect(vec3 *r, vec3 *n, vec3 *v);
+VMATHDEF void vec3_project(vec3 *r, vec3 *v, vec3 *n);
+VMATHDEF void vec3_reflect(vec3 *r, vec3 *v, vec3 *n);
 
 // vec4 common
 VMATHDEF scalar vec4_dot(vec4 *u, vec4 *v);
@@ -114,6 +118,7 @@ VMATHDEF scalar vec4_distsqr(vec4 *u, vec4 *v);
 VMATHDEF scalar vec4_dist(vec4 *u, vec4 *v);
 VMATHDEF scalar vec4_dist1(vec4 *u, vec4 *v);
 VMATHDEF void vec4_zero(vec4 *v);
+VMATHDEF void vec4_norm(vec4 *v);
 VMATHDEF void vec4_setc(vec4 *v, scalar x, scalar y, scalar z, scalar w);
 VMATHDEF void vec4_seta(vec4 *v, scalar *u);
 VMATHDEF void vec4_set(vec4 *r, vec4 *v);
@@ -126,8 +131,8 @@ VMATHDEF void vec4_tmul(vec4 *r, vec4 *u, vec4 *v);
 VMATHDEF void vec4_ma(vec4 *r, vec4 *u, scalar s, vec4 *v);
 VMATHDEF void vec4_comb(vec4 *r, scalar s, vec4 *u, scalar t, vec4 *v);
 VMATHDEF void vec4_lerp(vec4 *r, vec4 *u, vec4 *v, scalar t);
-VMATHDEF void vec4_project(vec4 *r, vec4 *n, vec4 *v);
-VMATHDEF void vec4_reflect(vec4 *r, vec4 *n, vec4 *v);
+VMATHDEF void vec4_project(vec4 *r, vec4 *v, vec4 *n);
+VMATHDEF void vec4_reflect(vec4 *r, vec4 *v, vec4 *n);
 
 // vec2, vec3, vec4 conversions (r = v)
 VMATHDEF void vec2_set_vec3(vec2 *r, vec3 *v);
@@ -142,14 +147,15 @@ VMATHDEF scalar vec2_cross(vec2 *u, vec2 *v); // scalar since first 2 components
 VMATHDEF void vec3_cross(vec3 *r, vec3 *u, vec3 *v);
 VMATHDEF void vec4_cross(vec4 *r, vec4 *u, vec4 *v); // ignores last component
 VMATHDEF void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c);
-VMATHDEF void vec3_plane_project(vec3 *r, plane *p, vec3 *v); // same as vec3_project
-VMATHDEF void vec3_plane_reflect(vec3 *r, plane *p, vec3 *v); // same as vec3_reflect
+VMATHDEF void vec3_plane_project(vec3 *r, vec3 *v, plane *p); // same as vec3_project (p has unit normal)
+VMATHDEF void vec3_plane_reflect(vec3 *r, vec3 *v, plane *p); // same as vec3_reflect
 VMATHDEF void plane_normalize(plane *r, plane *v); // normalize the normal part
 
 
 // mat2 common
 VMATHDEF void mat2_zero(mat2 *m);
 VMATHDEF void mat2_id(mat2 *m);
+VMATHDEF void mat2_rot(mat2 *m, scalar a); // m = rotation with angle a
 VMATHDEF void mat2_seta(mat2 *m, scalar *s);
 VMATHDEF void mat2_setv(mat2 *m, vec2 *a, vec2 *b);
 VMATHDEF void mat2_set_vec4(mat2 *m, vec4 *v); // m = v
@@ -183,6 +189,9 @@ VMATHDEF scalar mat2_det(mat2 *m);
 // mat3 common
 VMATHDEF void mat3_zero(mat3 *m); // m = 0
 VMATHDEF void mat3_id(mat3 *m); // m = I
+VMATHDEF void mat3_rotx(mat3 *m, scalar a); // m = rotation with angle a wrt x axis
+VMATHDEF void mat3_roty(mat3 *m, scalar a);
+VMATHDEF void mat3_rotz(mat3 *m, scalar a);
 VMATHDEF void mat3_seta(mat3 *m, scalar *s); // m = [s]
 VMATHDEF void mat3_setv(mat3 *m, vec3 *a, vec3 *b, vec3 *c); // m = [a, b, c] (rows)
 VMATHDEF void mat3_set(mat3 *r, mat3 *m); // r = m
@@ -216,6 +225,9 @@ VMATHDEF scalar mat3_det(mat3 *m); // return det(m)
 // mat3x4 common
 VMATHDEF void mat3x4_zero(mat3x4 *m);
 VMATHDEF void mat3x4_id(mat3x4 *m);
+VMATHDEF void mat3x4_rotx(mat3x4 *m, scalar a);
+VMATHDEF void mat3x4_roty(mat3x4 *m, scalar a);
+VMATHDEF void mat3x4_rotz(mat3x4 *m, scalar a);
 VMATHDEF void mat3x4_seta(mat3x4 *m, scalar *s);
 VMATHDEF void mat3x4_setv(mat3x4 *m, vec4 *a, vec4 *b, vec4 *c);
 VMATHDEF void mat3x4_set(mat3x4 *r, mat3x4 *m);
@@ -250,6 +262,9 @@ VMATHDEF scalar mat3x4_det(mat3x4 *m);
 // mat4 common
 VMATHDEF void mat4_zero(mat4 *m);
 VMATHDEF void mat4_id(mat4 *m);
+VMATHDEF void mat4_rotx(mat4 *m, scalar a);
+VMATHDEF void mat4_roty(mat4 *m, scalar a);
+VMATHDEF void mat4_rotz(mat4 *m, scalar a);
 VMATHDEF void mat4_seta(mat4 *m, scalar *s);
 VMATHDEF void mat4_setv(mat4 *m, vec4 *a, vec4 *b, vec4 *c, vec4 *d);
 VMATHDEF void mat4_set(mat4 *r, mat4 *m);
@@ -292,7 +307,6 @@ VMATHDEF void mat4_set_mat3(mat4 *r, mat3 *m);
 VMATHDEF void mat4_set_mat3x4(mat4 *r, mat3x4 *m);
 
 // quat common (also vec4)
-VMATHDEF scalar quat_norm(quat *v); // vec4_lenqsr
 VMATHDEF void quat_id(quat *v); // q = 1
 VMATHDEF void quat_inv(quat *r, quat *v); // r = inverse of q
 VMATHDEF void quat_conj(quat *r, quat *v); // r = conjugate of q
@@ -302,8 +316,14 @@ VMATHDEF void quat_mul(quat *r, quat *u, quat *v); // r = u * v (quat mult.)
 VMATHDEF void quat_mul_vec3(quat *r, quat *q, vec3 *v); // quat_mul with v = {x, y, z, 0}
 VMATHDEF void vec3_mul_quat(quat *r, vec3 *v, quat *q);
 VMATHDEF void vec3_rotate_quat(vec3 *r, quat *q, vec3 *v);
-VMATHDEF void mat3_from_quat(mat3 *m, quat *q);
+VMATHDEF void mat3_from_quat(mat3 *m, quat *q); // q is unit
 VMATHDEF void quat_from_mat3(quat *q, mat3 *m);
+
+// mat3x4 m from rotation:q scale:s translation:t
+VMATHDEF void mat3x4_from_rst(mat3x4 *m, quat *q, vec3 *s, vec3 *t);
+// z direction: dir
+VMATHDEF void mat3_from_dir(mat3 *m, vec3 *dir);
+
 
 
 #endif // _VMATH_INCLUDE_
@@ -386,6 +406,12 @@ VMATHDEF void vec2_zero(vec2 *v)
 	v->x = v->y = VP(0);
 }
 
+VMATHDEF void vec2_norm(vec2 *v)
+{
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y);
+	v->x *= s; v->y *= s;
+}
+
 VMATHDEF void vec2_setc(vec2 *v, scalar x, scalar y)
 {
 	v->x = x; v->y = y;
@@ -449,16 +475,16 @@ VMATHDEF void vec2_lerp(vec2 *r, vec2 *u, vec2 *v, scalar t)
 	r->x = s * u->x + t * v->x; r->y = s * u->y + t * v->y;
 }
 
-VMATHDEF void vec2_project(vec2 *r, vec2 *n, vec2 *v)
+VMATHDEF void vec2_project(vec2 *r, vec2 *v, vec2 *n)
 {
-	scalar t = vec2_dot(n, v) / vec2_dot(n, n);
-	vec2_ma(r, v, -t, n);
+	// scalar t = vec2_dot(n, v) / vec2_dot(n, n);
+	vec2_ma(r, v, -vec2_dot(n, v), n);
 }
 
-VMATHDEF void vec2_reflect(vec2 *r, vec2 *n, vec2 *v)
+VMATHDEF void vec2_reflect(vec2 *r, vec2 *v, vec2 *n)
 {
-	scalar t = vec2_dot(n, v) / vec2_dot(n, n);
-	vec2_ma(r, v, -t * VP(2), n);
+	//scalar t = vec2_dot(n, v) / vec2_dot(n, n);
+	vec2_ma(r, v, -VP(2) * vec2_dot(n, v), n);
 }
 
 
@@ -511,6 +537,12 @@ VMATHDEF scalar vec3_dist1(vec3 *u, vec3 *v)
 VMATHDEF void vec3_zero(vec3 *v)
 {
 	v->x = v->y = v->z = VP(0);
+}
+
+VMATHDEF void vec3_norm(vec3 *v)
+{
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	v->x *= s; v->y *= s; v->z *= s;
 }
 
 VMATHDEF void vec3_setc(vec3 *v, scalar x, scalar y, scalar z)
@@ -577,16 +609,16 @@ VMATHDEF void vec3_lerp(vec3 *r, vec3 *u, vec3 *v, scalar t)
 	r->z = s * u->z + t * v->z;
 }
 
-VMATHDEF void vec3_project(vec3 *r, vec3 *n, vec3 *v)
+VMATHDEF void vec3_project(vec3 *r, vec3 *v, vec3 *n)
 {
-	scalar t = vec3_dot(n, v) / vec3_dot(n, n);
-	vec3_ma(r, v, -t, n);
+	// scalar t = vec3_dot(n, v) / vec3_dot(n, n);
+	vec3_ma(r, v, -vec3_dot(n, v), n);
 }
 
-VMATHDEF void vec3_reflect(vec3 *r, vec3 *n, vec3 *v)
+VMATHDEF void vec3_reflect(vec3 *r, vec3 *v, vec3 *n)
 {
-	scalar t = vec3_dot(n, v) / vec3_dot(n, n);
-	vec3_ma(r, v, -t * VP(2), n);
+	// scalar t = vec3_dot(n, v) / vec3_dot(n, n);
+	vec3_ma(r, v, -VP(2) * vec3_dot(n, v), n);
 }
 
 
@@ -643,6 +675,12 @@ VMATHDEF scalar vec4_dist1(vec4 *u, vec4 *v)
 VMATHDEF void vec4_zero(vec4 *v)
 {
 	v->x = v->y = v->z = v->w = 0;
+}
+
+VMATHDEF void vec4_norm(vec4 *v)
+{
+	scalar s = VP(1) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+	v->x *= s; v->y *= s; v->z *= s; v->w *= s;
 }
 
 VMATHDEF void vec4_setc(vec4 *v, scalar x, scalar y, scalar z, scalar w)
@@ -717,16 +755,16 @@ VMATHDEF void vec4_lerp(vec4 *r, vec4 *u, vec4 *v, scalar t)
 	r->z = s * u->z + t * v->z; r->w = s * u->w + t * v->w;
 }
 
-VMATHDEF void vec4_project(vec4 *r, vec4 *n, vec4 *v)
+VMATHDEF void vec4_project(vec4 *r, vec4 *v, vec4 *n)
 {
-	scalar t = vec4_dot(n, v) / vec4_dot(n, n);
-	vec4_ma(r, v, -t, n);
+	// scalar t = vec4_dot(n, v) / vec4_dot(n, n);
+	vec4_ma(r, v, -vec4_dot(n, v), n);
 }
 
-VMATHDEF void vec4_reflect(vec4 *r, vec4 *n, vec4 *v)
+VMATHDEF void vec4_reflect(vec4 *r, vec4 *v, vec4 *n)
 {
-	scalar t = vec4_dot(n, v) / vec4_dot(n, n);
-	vec4_ma(r, v, -t * VP(2), n);
+	// scalar t = vec4_dot(n, v) / vec4_dot(n, n);
+	vec4_ma(r, v, -VP(2) * vec4_dot(n, v), n);
 }
 
 
@@ -801,18 +839,26 @@ VMATHDEF void plane_from_points(plane *p, vec3 *a, vec3 *b, vec3 *c)
 	p->w = vec3_dot(a, &n);
 }
 
-VMATHDEF void vec3_plane_project(vec3 *r, plane *p, vec3 *v)
+VMATHDEF void vec3_plane_project(vec3 *r, vec3 *v, plane *p)
 {
 	vec3 n;
 	vec3_set_vec4(&n, p);
 	vec3_project(r, &n, v);
 }
 
-VMATHDEF void vec3_plane_reflect(vec3 *r, plane *p, vec3 *v)
+VMATHDEF void vec3_plane_reflect(vec3 *r, vec3 *v, plane *p)
 {
 	vec3 n;
 	vec3_set_vec4(&n, p);
 	vec3_reflect(r, &n, v);
+}
+
+VMATHDEF void plane_norm(plane *p)
+{
+	scalar t = vsqrt(p->x * p->x + p->y * p->y + p->z * p->z);
+	scalar s = VP(1) / t;
+	p->x *= s; p->y *= s; p->z *= s;
+	p->w *= t;
 }
 
 VMATHDEF void plane_normalize(plane *r, plane *v)
@@ -834,8 +880,15 @@ VMATHDEF void mat2_zero(mat2 *m)
 
 VMATHDEF void mat2_id(mat2 *m)
 {
-	memset(m, 0, sizeof *m);
+	m->a.y = m->b.x = VP(0);
 	m->a.x = m->b.y = VP(1);
+}
+
+VMATHDEF void mat2_rot(mat2 *m, scalar a)
+{
+	scalar c = vcos(a), s = vsin(a);
+	m->a.x =  c; m->a.y = -s;
+	m->b.x =  s; m->b.y =  c;
 }
 
 VMATHDEF void mat2_seta(mat2 *m, scalar *s)
@@ -1014,6 +1067,33 @@ VMATHDEF void mat3_id(mat3 *m)
 {
 	memset(m, 0, sizeof *m);
 	m->a.x = m->b.y = m->c.z = VP(1);
+}
+
+VMATHDEF void mat3_rotx(mat3 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->a.x = VP(1);
+	m->b.y =  c; m->b.z = -s;
+	m->c.y =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat3_roty(mat3 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->b.y = VP(1);
+	m->a.x =  c; m->a.z = -s;
+	m->c.x =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat3_rotz(mat3 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->c.z = VP(1);
+	m->a.x =  c; m->a.y = -s;
+	m->b.x =  s; m->b.y =  c;
 }
 
 VMATHDEF void mat3_seta(mat3 *m, scalar *s)
@@ -1217,6 +1297,33 @@ VMATHDEF void mat3x4_id(mat3x4 *m)
 {
 	memset(m, 0, sizeof *m);
 	m->a.x = m->b.y = m->c.z = VP(1);
+}
+
+VMATHDEF void mat3x4_rotx(mat3x4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->a.x = VP(1);
+	m->b.y =  c; m->b.z = -s;
+	m->c.y =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat3x4_roty(mat3x4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->b.y = VP(1);
+	m->a.x =  c; m->a.z = -s;
+	m->c.x =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat3x4_rotz(mat3x4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->c.z = VP(1);
+	m->a.x =  c; m->a.y = -s;
+	m->b.x =  s; m->b.y =  c;
 }
 
 VMATHDEF void mat3x4_seta(mat3x4 *m, scalar *s)
@@ -1434,7 +1541,34 @@ VMATHDEF void mat4_zero(mat4 *m)
 VMATHDEF void mat4_id(mat4 *m)
 {
 	memset(m, 0, sizeof *m);
-	m->a.x = m->b.y = m->c.z = m->d.w = 1;
+	m->a.x = m->b.y = m->c.z = m->d.w = VP(1);
+}
+
+VMATHDEF void mat4_rotx(mat4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->a.x = m->d.w = VP(1);
+	m->b.y =  c; m->b.z = -s;
+	m->c.y =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat4_roty(mat4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->b.y = m->d.w = VP(1);
+	m->a.x =  c; m->a.z = -s;
+	m->c.x =  s; m->c.z =  c;
+}
+
+VMATHDEF void mat4_rotz(mat4 *m, scalar a)
+{
+	memset(m, 0, sizeof *m);
+	scalar c = vcos(a), s = vsin(a);
+	m->c.z = m->d.w = VP(1);
+	m->a.x =  c; m->a.y = -s;
+	m->b.x =  s; m->b.y =  c;
 }
 
 VMATHDEF void mat4_seta(mat4 *m, scalar *s)
@@ -1735,14 +1869,16 @@ VMATHDEF void mat4_set_mat3x4(mat4 *r, mat3x4 *m)
 // -------------------
 // --- quat common ---
 // -------------------
-VMATHDEF scalar quat_norm(quat *v)
-{
-	return v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w;
-}
-
 VMATHDEF void quat_id(quat *v)
 {
 	v->x = v->y = v->z = VP(0); v->w = VP(1);
+}
+
+VMATHDEF void quat_from_rot(quat *r, vec3 *v, scalar a)
+{
+	scalar s = vsin(a / 2) / vsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	r->x = v->x * s; r->y = v->y * s; r->z = v->z * s;
+	r->w = vcos(a / 2);
 }
 
 VMATHDEF void quat_inv(quat *r, quat *v)
@@ -1804,8 +1940,8 @@ VMATHDEF void vec3_rotate_quat(vec3 *r, quat *q, vec3 *v)
 {
 	quat p;
 	quat_inv(&p, q);
-	vec3_mul_quat(&p, v, &p);
-	quat_mul(&p, q, &p);
+	vec3_mul_quat(&p, v, &p); // p = v * inv(q)
+	quat_mul(&p, q, &p); // p = q * v * inv(q)
 	r->x = p.x; r->y = p.y; r->z = p.z;
 }
 
@@ -1826,7 +1962,7 @@ VMATHDEF void mat3_from_quat(mat3 *m, quat *q)
 	m->c.z = VP(1) - VP(2) * (x * x + y * y);
 }
 
-VMATHDEF void mat3x4_from_qst(mat3x4 *m, quat *q, vec3 *s, vec3 *t)
+VMATHDEF void mat3x4_from_rst(mat3x4 *m, quat *q, vec3 *s, vec3 *t)
 {
 	scalar x = q->x, y = q->y, z = q->z, w = q->w;
 	
@@ -1885,5 +2021,86 @@ VMATHDEF void quat_from_mat3(quat *q, mat3 *m)
 	q->x = t * x; q->y = t * y; q->z = t * z; q->w = t * w;
 }
 
+VMATHDEF void mat3_from_dir(mat3 *m, vec3 *dir)
+{
+	scalar x = vabs(dir->x), y = vabs(dir->y), z = vabs(dir->z);
+	vec3 u;
+	vec3_zero(&u);
+	if (x <= y && x <= z)
+		u.x = VP(1);
+	else if (y <= x && y <= z)
+		u.y = VP(1);
+	else
+		u.z = VP(1);
+	
+	vec3_set(&m->c, dir);
+	vec3_norm(&m->c);
+	
+	vec3_project(&m->a, &u, &m->c);
+	vec3_norm(&m->a);
+	
+	vec3_cross(&m->b, &m->a, &m->c);
+	
+	mat3_trans(m);
+}
+
+
+VMATHDEF void mat4_rot_axis(mat4 *m, vec3 *u, scalar *a)
+{
+	scalar s = vsin(a), c = vcos(a);
+	scalar d = 1 - c;
+
+	scalar dxx = d * u->x * u->x;
+	scalar dyy = d * u->y * u->y;
+	scalar dzz = d * u->z * u->z;
+	scalar dxy = d * u->x * u->y;
+	scalar dxz = d * u->x * u->z;
+	scalar dyz = d * u->y * u->z;
+	
+	scalar sx = s * u->x, sy = s * u->y, sz = s * u->z;
+
+	m->a.x = c + dxx;  m->a.y = dxy - sz; m->a.z = dxz + sy; m->a.w = VP(0);
+	m->b.x = dxy + sz; m->b.y = c + dyy;  m->b.z = dyz - sx; m->b.w = VP(0);
+	m->c.x = dxz - sy; m->c.y = dyz + sx; m->c.z = c + dzz;  m->c.w = VP(0);
+	m->d.x = VP(0);    m->d.y = VP(0);    m->d.z = VP(0);    m->d.w = VP(1);
+}
+
+VMATHDEF void mat3x4_rot_axis(mat3x4 *m, vec3 *u, scalar *a)
+{
+	scalar s = vsin(a), c = vcos(a);
+	scalar d = 1 - c;
+
+	scalar dxx = d * u->x * u->x;
+	scalar dyy = d * u->y * u->y;
+	scalar dzz = d * u->z * u->z;
+	scalar dxy = d * u->x * u->y;
+	scalar dxz = d * u->x * u->z;
+	scalar dyz = d * u->y * u->z;
+	
+	scalar sx = s * u->x, sy = s * u->y, sz = s * u->z;
+
+	m->a.x = c + dxx;  m->a.y = dxy - sz; m->a.z = dxz + sy; m->a.w = VP(0);
+	m->b.x = dxy + sz; m->b.y = c + dyy;  m->b.z = dyz - sx; m->b.w = VP(0);
+	m->c.x = dxz - sy; m->c.y = dyz + sx; m->c.z = c + dzz;  m->c.w = VP(0);
+}
+
+VMATHDEF void mat3_rot_axis(mat3 *m, vec3 *u, scalar *a)
+{
+	scalar s = vsin(a), c = vcos(a);
+	scalar d = 1 - c;
+
+	scalar dxx = d * u->x * u->x;
+	scalar dyy = d * u->y * u->y;
+	scalar dzz = d * u->z * u->z;
+	scalar dxy = d * u->x * u->y;
+	scalar dxz = d * u->x * u->z;
+	scalar dyz = d * u->y * u->z;
+	
+	scalar sx = s * u->x, sy = s * u->y, sz = s * u->z;
+
+	m->a.x = c + dxx;  m->a.y = dxy - sz; m->a.z = dxz + sy;
+	m->b.x = dxy + sz; m->b.y = c + dyy;  m->b.z = dyz - sx;
+	m->c.x = dxz - sy; m->c.y = dyz + sx; m->c.z = c + dzz;
+}
 
 #endif // VMATH_IMPLEMENTATION
