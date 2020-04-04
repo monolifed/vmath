@@ -967,8 +967,8 @@ VMATHDEF void mat4_eq_roty(mat4 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->b.y = m->d.w = VP(1);
-	m->a.x = c; m->a.z = -s;
-	m->c.x = s; m->c.z =  c;
+	m->a.x =  c; m->a.z = s;
+	m->c.x = -s; m->c.z = c;
 }
 
 VMATHDEF void mat4_eq_rotz(mat4 *m, scalar a)
@@ -1340,8 +1340,8 @@ VMATHDEF void mat3x4_eq_rotx(mat3x4 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->a.x = VP(1);
-	m->b.y =  c; m->b.z = -s;
-	m->c.y =  s; m->c.z =  c;
+	m->b.y = c; m->b.z = -s;
+	m->c.y = s; m->c.z =  c;
 }
 
 VMATHDEF void mat3x4_eq_roty(mat3x4 *m, scalar a)
@@ -1349,8 +1349,8 @@ VMATHDEF void mat3x4_eq_roty(mat3x4 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->b.y = VP(1);
-	m->a.x =  c; m->a.z = -s;
-	m->c.x =  s; m->c.z =  c;
+	m->a.x =  c; m->a.z = s;
+	m->c.x = -s; m->c.z = c;
 }
 
 VMATHDEF void mat3x4_eq_rotz(mat3x4 *m, scalar a)
@@ -1358,8 +1358,8 @@ VMATHDEF void mat3x4_eq_rotz(mat3x4 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->c.z = VP(1);
-	m->a.x =  c; m->a.y = -s;
-	m->b.x =  s; m->b.y =  c;
+	m->a.x = c; m->a.y = -s;
+	m->b.x = s; m->b.y =  c;
 }
 
 VMATHDEF void mat3x4_eq_rotaxis(mat3x4 *m, vec3 *u, scalar a)
@@ -1680,8 +1680,8 @@ VMATHDEF void mat3_eq_rotx(mat3 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->a.x = VP(1);
-	m->b.y =  c; m->b.z = -s;
-	m->c.y =  s; m->c.z =  c;
+	m->b.y = c; m->b.z = -s;
+	m->c.y = s; m->c.z =  c;
 }
 
 VMATHDEF void mat3_eq_roty(mat3 *m, scalar a)
@@ -1689,8 +1689,8 @@ VMATHDEF void mat3_eq_roty(mat3 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->b.y = VP(1);
-	m->a.x =  c; m->a.z = -s;
-	m->c.x =  s; m->c.z =  c;
+	m->a.x =  c; m->a.z = s;
+	m->c.x = -s; m->c.z = c;
 }
 
 VMATHDEF void mat3_eq_rotz(mat3 *m, scalar a)
@@ -1698,8 +1698,13 @@ VMATHDEF void mat3_eq_rotz(mat3 *m, scalar a)
 	vmemset(m, 0, sizeof *m);
 	scalar c = vcos(a), s = vsin(a);
 	m->c.z = VP(1);
-	m->a.x =  c; m->a.y = -s;
-	m->b.x =  s; m->b.y =  c;
+	m->a.x = c; m->a.y = -s;
+	m->b.x = s; m->b.y =  c;
+}
+
+VMATHDEF void mat3_eq_rot2d(mat3 *m, scalar a)
+{
+	mat3_eq_rotz(m, a);
 }
 
 VMATHDEF void mat3_eq_rotaxis(mat3 *m, vec3 *u, scalar a)
@@ -2007,8 +2012,8 @@ VMATHDEF void mat2_t(mat2 *m)
 VMATHDEF void mat2_rot(mat2 *m, scalar a)
 {
 	scalar c = vcos(a), s = vsin(a);
-	m->a.x =  c; m->a.y = -s;
-	m->b.x =  s; m->b.y =  c;
+	m->a.x = c; m->a.y = -s;
+	m->b.x = s; m->b.y =  c;
 }
 
 VMATHDEF void mat2_eq_scale(mat2 *m, scalar sx, scalar sy)
