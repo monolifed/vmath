@@ -1,5 +1,5 @@
 # vmath
-c11 verbose vector math library
+c99 vector/matrix/quaternion library
 
 not tested  
 probably not very efficient  
