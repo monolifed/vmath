@@ -1244,41 +1244,41 @@ VMATHDEF void mat4_inverse(mat4 *r, mat4 *m)
 	scalar c0, c1, c2, c3, c4, c5;
 	scalar invdet;
 	
-	s0 = m->a.x * m->b.y - m->a.y * m->b.x;
-	s1 = m->a.x * m->c.y - m->a.y * m->c.x;
-	s2 = m->a.x * m->d.y - m->a.y * m->d.x;
-	s3 = m->b.x * m->c.y - m->b.y * m->c.x;
-	s4 = m->b.x * m->d.y - m->b.y * m->d.x;
-	s5 = m->c.x * m->d.y - m->c.y * m->d.x;
-
-	c0 = m->a.z * m->b.w - m->a.w * m->b.z;
-	c1 = m->a.z * m->c.w - m->a.w * m->c.z;
-	c2 = m->a.z * m->d.w - m->a.w * m->d.z;
-	c3 = m->b.z * m->c.w - m->b.w * m->c.z;
-	c4 = m->b.z * m->d.w - m->b.w * m->d.z;
-	c5 = m->c.z * m->d.w - m->c.w * m->d.z;
+	c0 = m->a.x * m->b.y - m->a.y * m->b.x;
+	c1 = m->a.x * m->b.z - m->a.z * m->b.x;
+	c2 = m->a.x * m->b.w - m->a.w * m->b.x;
+	c3 = m->a.y * m->b.z - m->a.z * m->b.y;
+	c4 = m->a.y * m->b.w - m->a.w * m->b.y;
+	c5 = m->a.z * m->b.w - m->a.w * m->b.z;
 	
-	invdet = VP(1) / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
+	s0 = m->c.x * m->d.y - m->c.y * m->d.x;
+	s1 = m->c.x * m->d.z - m->c.z * m->d.x;
+	s2 = m->c.x * m->d.w - m->c.w * m->d.x;
+	s3 = m->c.y * m->d.z - m->c.z * m->d.y;
+	s4 = m->c.y * m->d.w - m->c.w * m->d.y;
+	s5 = m->c.z * m->d.w - m->c.w * m->d.z;
 	
-	r->a.x =  (m->b.y * c5 - m->c.y * c4 + m->d.y * c3) * invdet;
-	r->a.y = -(m->a.y * c5 - m->c.y * c2 + m->d.y * c1) * invdet;
-	r->a.z =  (m->a.y * c4 - m->b.y * c2 + m->d.y * c0) * invdet;
-	r->a.w = -(m->a.y * c3 - m->b.y * c1 + m->c.y * c0) * invdet;
+	invdet = VP(1) / (c0 * s5 - c1 * s4 + c2 * s3 + c3 * s2 - c4 * s1 + c5 * s0);
 	
-	r->b.x = -(m->b.x * c5 - m->c.x * c4 + m->d.x * c3) * invdet;
-	r->b.y =  (m->a.x * c5 - m->c.x * c2 + m->d.x * c1) * invdet;
-	r->b.z = -(m->a.x * c4 - m->b.x * c2 + m->d.x * c0) * invdet;
-	r->b.w =  (m->a.x * c3 - m->b.x * c1 + m->c.x * c0) * invdet;
+	r->a.x =  (m->b.y * s5 - m->b.z * s4 + m->b.w * s3) * invdet;
+	r->a.y = -(m->a.y * s5 - m->a.z * s4 + m->a.w * s3) * invdet;
+	r->a.z =  (m->d.y * c5 - m->d.z * c4 + m->d.w * c3) * invdet;
+	r->a.w = -(m->c.y * c5 - m->c.z * c4 + m->c.w * c3) * invdet;
 	
-	r->c.x =  (m->b.w * s5 - m->c.w * s4 + m->d.w * s3) * invdet;
-	r->c.y = -(m->a.w * s5 - m->c.w * s2 + m->d.w * s1) * invdet;
-	r->c.z =  (m->a.w * s4 - m->b.w * s2 + m->d.w * s0) * invdet;
-	r->c.w = -(m->a.w * s3 - m->b.w * s1 + m->c.w * s0) * invdet;
+	r->b.x = -(m->b.x * s5 - m->b.z * s2 + m->b.w * s1) * invdet;
+	r->b.y =  (m->a.x * s5 - m->a.z * s2 + m->a.w * s1) * invdet;
+	r->b.z = -(m->d.x * c5 - m->d.z * c2 + m->d.w * c1) * invdet;
+	r->b.w =  (m->c.x * c5 - m->c.z * c2 + m->c.w * c1) * invdet;
 	
-	r->d.x = -(m->b.z * s5 - m->c.z * s4 + m->d.z * s3) * invdet;
-	r->d.y =  (m->a.z * s5 - m->c.z * s2 + m->d.z * s1) * invdet;
-	r->d.z = -(m->a.z * s4 - m->b.z * s2 + m->d.z * s0) * invdet;
-	r->d.w =  (m->a.z * s3 - m->b.z * s1 + m->c.z * s0) * invdet;
+	r->c.x =  (m->b.x * s4 - m->b.y * s2 + m->b.w * s0) * invdet;
+	r->c.y = -(m->a.x * s4 - m->a.y * s2 + m->a.w * s0) * invdet;
+	r->c.z =  (m->d.x * c4 - m->d.y * c2 + m->d.w * c0) * invdet;
+	r->c.w = -(m->c.x * c4 - m->c.y * c2 + m->c.w * c0) * invdet;
+	
+	r->d.x = -(m->b.x * s3 - m->b.y * s1 + m->b.z * s0) * invdet;
+	r->d.y =  (m->a.x * s3 - m->a.y * s1 + m->a.z * s0) * invdet;
+	r->d.z = -(m->d.x * c3 - m->d.y * c1 + m->d.z * c0) * invdet;
+	r->d.w =  (m->c.x * c3 - m->c.y * c1 + m->c.z * c0) * invdet;
 }
 
 VMATHDEF void mat4_vtrace(vec4 *v, mat4 *m)
@@ -1295,20 +1295,20 @@ VMATHDEF scalar mat4_trace(mat4 *m)
 VMATHDEF scalar mat4_det3(mat4 *m)
 {
 	return
-	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+	  m->c.x * (m->a.y * m->b.z - m->a.z * m->b.y)
+	- m->c.y * (m->a.x * m->b.z - m->a.z * m->b.x)
+	+ m->c.z * (m->a.x * m->b.y - m->a.y * m->b.x);
 }
 
 VMATHDEF scalar mat4_det(mat4 *m)
 {
-	return 
+	return // (c0 * s5 - c1 * s4 + c2 * s3 + c3 * s2 - c4 * s1 + c5 * s0) from mat4_inverse
 	  (m->a.x * m->b.y - m->a.y * m->b.x) * (m->c.z * m->d.w - m->c.w * m->d.z)
-	- (m->a.x * m->c.y - m->a.y * m->c.x) * (m->b.z * m->d.w - m->b.w * m->d.z)
-	+ (m->a.x * m->d.y - m->a.y * m->d.x) * (m->b.z * m->c.w - m->b.w * m->c.z)
-	+ (m->b.x * m->c.y - m->b.y * m->c.x) * (m->a.z * m->d.w - m->a.w * m->d.z)
-	- (m->b.x * m->d.y - m->b.y * m->d.x) * (m->a.z * m->c.w - m->a.w * m->c.z)
-	+ (m->c.x * m->d.y - m->c.y * m->d.x) * (m->a.z * m->b.w - m->a.w * m->b.z);
+	- (m->a.x * m->b.z - m->a.z * m->b.x) * (m->c.y * m->d.w - m->c.w * m->d.y)
+	+ (m->a.x * m->b.w - m->a.w * m->b.x) * (m->c.y * m->d.z - m->c.z * m->d.y)
+	+ (m->a.y * m->b.z - m->a.z * m->b.y) * (m->c.x * m->d.w - m->c.w * m->d.x)
+	- (m->a.y * m->b.w - m->a.w * m->b.y) * (m->c.x * m->d.z - m->c.z * m->d.x)
+	+ (m->a.z * m->b.w - m->a.w * m->b.z) * (m->c.x * m->d.y - m->c.y * m->d.x);
 }
 
 
@@ -1603,34 +1603,32 @@ VMATHDEF void mat3x4_transpose(mat3x4 *r, mat3x4 *m)
 
 VMATHDEF void mat3x4_inverse(mat3x4 *r, mat3x4 *m)
 {
-	scalar s0, s1, s3;
-	scalar c0, c1, c3;
+	scalar c0, c1, c2, c3, c4, c5;
 	scalar invdet;
 	
-	s0 = m->a.x * m->b.y - m->a.y * m->b.x;
-	s1 = m->a.x * m->c.y - m->a.y * m->c.x;
-	s3 = m->b.x * m->c.y - m->b.y * m->c.x;
+	c0 = m->a.x * m->b.y - m->a.y * m->b.x;
+	c1 = m->a.x * m->b.z - m->a.z * m->b.x;
+	c2 = m->a.x * m->b.w - m->a.w * m->b.x;
+	c3 = m->a.y * m->b.z - m->a.z * m->b.y;
+	c4 = m->a.y * m->b.w - m->a.w * m->b.y;
+	c5 = m->a.z * m->b.w - m->a.w * m->b.z;
 	
-	c0 = m->a.z * m->b.w - m->a.w * m->b.z;
-	c1 = m->a.z * m->c.w - m->a.w * m->c.z;
-	c3 = m->b.z * m->c.w - m->b.w * m->c.z;
+	invdet = VP(1) / (m->c.x * c3 - m->c.y * c1 + m->c.z * c0);
 	
-	invdet = VP(1) / (s0 * m->c.z - s1 * m->b.z + s3 * m->a.z);
+	r->a.x =  (m->b.y * m->c.z - m->b.z * m->c.y) * invdet;
+	r->a.y = -(m->a.y * m->c.z - m->a.z * m->c.y) * invdet;
+	r->a.z =  (c3) * invdet;
+	r->a.w = -(m->c.y * c5 - m->c.z * c4 + m->c.w * c3) * invdet;
 	
-	r->a.x =  (m->b.y * m->c.z - m->c.y * m->b.z) * invdet;
-	r->a.y = -(m->a.y * m->c.z - m->c.y * m->a.z) * invdet;
-	r->a.z =  (m->a.y * m->b.z - m->b.y * m->a.z) * invdet;
-	r->a.w = -(m->a.y * c3 - m->b.y * c1 + m->c.y * c0) * invdet;
+	r->b.x = -(m->b.x * m->c.z - m->b.z * m->c.x) * invdet;
+	r->b.y =  (m->a.x * m->c.z - m->a.z * m->c.x) * invdet;
+	r->b.z = -(c1) * invdet;
+	r->b.w =  (m->c.x * c5 - m->c.z * c2 + m->c.w * c1) * invdet;
 	
-	r->b.x = -(m->b.x * m->c.z - m->c.x * m->b.z) * invdet;
-	r->b.y =  (m->a.x * m->c.z - m->c.x * m->a.z) * invdet;
-	r->b.z = -(m->a.x * m->b.z - m->b.x * m->a.z) * invdet;
-	r->b.w =  (m->a.x * c3 - m->b.x * c1 + m->c.x * c0) * invdet;
-	
-	r->c.x =  s3 * invdet;
-	r->c.y = -s1 * invdet;
-	r->c.z =  s0 * invdet;
-	r->c.w = -(m->a.w * s3 - m->b.w * s1 + m->c.w * s0) * invdet;
+	r->c.x =  (m->b.x * m->c.y - m->b.y * m->c.x) * invdet;
+	r->c.y = -(m->a.x * m->c.y - m->a.y * m->c.x) * invdet;
+	r->c.z =  (c0) * invdet;
+	r->c.w = -(m->c.x * c4 - m->c.y * c2 + m->c.w * c0) * invdet;
 }
 
 VMATHDEF void mat3x4_vtrace(vec3 *v, mat3x4 *m)
@@ -1646,9 +1644,9 @@ VMATHDEF scalar mat3x4_trace(mat3x4 *m)
 VMATHDEF scalar mat3x4_det(mat3x4 *m)
 {
 	return
-	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
+	  m->c.x * (m->a.y * m->b.z - m->a.z * m->b.y)
+	- m->c.y * (m->a.x * m->b.z - m->a.z * m->b.x)
+	+ m->c.z * (m->a.x * m->b.y - m->a.y * m->b.x);
 }
 
 
@@ -1948,6 +1946,30 @@ VMATHDEF void mat3_transpose(mat3 *r, mat3 *m)
 	r->a.x = m->a.x; r->b.y = m->b.y; r->c.z = m->c.z;
 }
 
+VMATHDEF void mat3_inverse(mat3 *r, mat3 *m)
+{
+	scalar c0, c1, c3;
+	scalar invdet;
+	
+	c0 = m->a.x * m->b.y - m->a.y * m->b.x;
+	c1 = m->a.x * m->b.z - m->a.z * m->b.x;
+	c3 = m->a.y * m->b.z - m->a.z * m->b.y;
+	
+	invdet = VP(1) / (m->c.x * c3 - m->c.y * c1 + m->c.z * c0);
+	
+	r->a.x =  (m->b.y * m->c.z - m->b.z * m->c.y) * invdet;
+	r->a.y = -(m->a.y * m->c.z - m->a.z * m->c.y) * invdet;
+	r->a.z =  (c3) * invdet;
+	
+	r->b.x = -(m->b.x * m->c.z - m->b.z * m->c.x) * invdet;
+	r->b.y =  (m->a.x * m->c.z - m->a.z * m->c.x) * invdet;
+	r->b.z = -(c1) * invdet;
+	
+	r->c.x =  (m->b.x * m->c.y - m->b.y * m->c.x) * invdet;
+	r->c.y = -(m->a.x * m->c.y - m->a.y * m->c.x) * invdet;
+	r->c.z =  (c0) * invdet;
+}
+
 VMATHDEF void mat3_vtrace(vec3 *v, mat3 *m)
 {
 	v->x = m->a.x; v->y = m->b.y; v->z = m->c.z;
@@ -1961,31 +1983,9 @@ VMATHDEF scalar mat3_trace(mat3 *m)
 VMATHDEF scalar mat3_det(mat3 *m)
 {
 	return
-	  m->a.x * (m->b.y * m->c.z - m->b.z * m->c.y)
-	- m->a.y * (m->b.x * m->c.z - m->b.z * m->c.x)
-	+ m->a.z * (m->b.x * m->c.y - m->b.y * m->c.x);
-}
-
-VMATHDEF void mat3_inverse(mat3 *r, mat3 *m)
-{
-	scalar az, bz, cz, invdet;
-	az = m->b.x * m->c.y - m->b.y * m->c.x;
-	bz = m->a.x * m->c.y - m->a.y * m->c.x;
-	cz = m->a.x * m->b.y - m->a.y * m->b.x;
-	
-	invdet = VP(1) / (cz * m->c.z - bz * m->b.z + az * m->a.z);
-	
-	r->a.x =  (m->b.y * m->c.z - m->b.z * m->c.y) * invdet;
-	r->a.y = -(m->a.y * m->c.z - m->a.z * m->c.y) * invdet;
-	r->a.z =  (m->a.y * m->b.z - m->a.z * m->b.y) * invdet;
-	
-	r->b.x = -(m->b.x * m->c.z - m->b.z * m->c.x) * invdet;
-	r->b.y =  (m->a.x * m->c.z - m->a.z * m->c.x) * invdet;
-	r->b.z = -(m->a.x * m->b.z - m->a.z * m->b.x) * invdet;
-	
-	r->c.x =  az * invdet;
-	r->c.y = -bz * invdet;
-	r->c.z =  cz * invdet;
+	  m->c.x * (m->a.y * m->b.z - m->a.z * m->b.y)
+	- m->c.y * (m->a.x * m->b.z - m->a.z * m->b.x)
+	+ m->c.z * (m->a.x * m->b.y - m->a.y * m->b.x);
 }
 
 
@@ -2167,6 +2167,17 @@ VMATHDEF void mat2_transpose(mat2 *r, mat2 *m)
 	r->a.x = m->a.x; r->b.y = m->b.y;
 }
 
+VMATHDEF void mat2_inverse(mat2 *r, mat2 *m)
+{
+	scalar invdet = VP(1) / (m->a.x * m->b.y - m->a.y * m->b.x);
+	
+	r->a.x =  m->b.y * invdet;
+	r->a.y = -m->a.y * invdet;
+	
+	r->b.x = -m->b.x * invdet;
+	r->b.y =  m->a.x * invdet;
+}
+
 VMATHDEF void mat2_vtrace(vec2 *v, mat2 *m)
 {
 	v->x = m->a.x; v->y = m->b.y;;
@@ -2181,18 +2192,6 @@ VMATHDEF scalar mat2_det(mat2 *m)
 {
 	return m->a.x * m->b.y - m->a.y * m->b.x;
 }
-
-VMATHDEF void mat2_inverse(mat2 *r, mat2 *m)
-{
-	scalar invdet = VP(1) / (m->a.x * m->b.y - m->a.y * m->b.x);
-	
-	r->a.x =  m->b.y * invdet;
-	r->a.y = -m->a.y * invdet;
-	
-	r->b.x = -m->b.x * invdet;
-	r->b.y =  m->a.x * invdet;
-}
-
 
 // -------------------
 // --- quat common ---

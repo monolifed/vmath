@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -pedantic -std=c11 -DVEC_TEST vmath_test.c -lm
+gcc -Wall -Wextra -pedantic -std=c99 vmath_test.c -lm
