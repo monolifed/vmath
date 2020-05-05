@@ -17,7 +17,7 @@
 #define SEPVECP2(V) V->x, V->y
 #define SEPVEC2(V)  V.x, V.y
 
-#define FMTVEC4 "%0.2f, %0.2f, %0.2f, %0.2f"
+#define FMTVEC4 "%+0.2f, %+0.2f, %+0.2f, %+0.2f"
 
 #define PRINTMAT4R(M, R) printf("[" FMTVEC4 "]\n", SEPVEC4(M.R))
 
