@@ -1864,7 +1864,7 @@ VMATHDEF void mat3_mul(mat3 r, mat3 f, mat3 g)
 	_vec3_mul_mat3(m[0], f[0], g);
 	_vec3_mul_mat3(m[1], f[1], g);
 	_vec3_mul_mat3(m[2], f[2], g);
-	vmemcpy(r, m, sizeof(mat3));
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat3_ma(mat3 r, mat3 f, scalar t, mat3 g)
@@ -2101,7 +2101,7 @@ VMATHDEF void mat2_mul(mat2 r, mat2 f, mat2 g)
 	mat2 m;
 	_vec2_mul_mat2(m[0], f[0], g);
 	_vec2_mul_mat2(m[1], f[1], g);
-	vmemcpy(r, m, sizeof(mat2));
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat2_ma(mat2 r, mat2 f, scalar t, mat2 g)
