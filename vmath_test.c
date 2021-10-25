@@ -1,11 +1,11 @@
-#include "vmath_array.h"
+#include "vmath.h"
 
 #include <stdio.h>
 
 #define VMATH_IMPLEMENTATION
 //#define VMATH_NOSTDMEM
 //#define VMATH_DOUBLEPREC
-#include "vmath_array.h"
+#include "vmath.h"
 
 #define SEPVEC4(V) V[0], V[1], V[2], V[3]
 #define SEPVEC3(V) V[0], V[1], V[2]

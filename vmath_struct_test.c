@@ -1,11 +1,11 @@
-#include "vmath.h"
+#include "vmath_struct.h"
 
 #include <stdio.h>
 
 #define VMATH_IMPLEMENTATION
 //#define VMATH_NOSTDMEM
 //#define VMATH_DOUBLEPREC
-#include "vmath.h"
+#include "vmath_struct.h"
 
 
 
