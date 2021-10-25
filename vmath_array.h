@@ -879,14 +879,14 @@ VMATHDEF void vec3_plane_project(vec3 r, vec3 v, plane p)
 {
 	vec3 n;
 	vec3_from_vec4(n, p);
-	vec3_project(r, n, v);
+	vec3_project(r, v, n);
 }
 
 VMATHDEF void vec3_plane_reflect(vec3 r, vec3 v, plane p)
 {
 	vec3 n;
 	vec3_from_vec4(n, p);
-	vec3_reflect(r, n, v);
+	vec3_reflect(r, v, n);
 }
 
 VMATHDEF void plane_makeunit(plane p)
