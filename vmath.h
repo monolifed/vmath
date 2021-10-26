@@ -25,7 +25,7 @@ typedef scalar vec2[2];
 
 // a,b,c,d are rows of the matrix
 // i.e. row major matrix
-// However we use v' = Mv
+// we use v' = Mv
 // i.e. pre-multiplied
 typedef vec4 mat4[4], mat4x4[4];
 
@@ -46,7 +46,7 @@ VMATHDEF scalar vec4_distsqr(vec4 u, vec4 v); // return |u - v|^2
 VMATHDEF scalar vec4_dist(vec4 u, vec4 v); // return |u - v|
 VMATHDEF scalar vec4_dist1(vec4 u, vec4 v); // return d1(u, v)
 VMATHDEF void vec4_zero(vec4 r); // r = 0
-VMATHDEF void vec4_makeunit(vec4 r); // r = r / |r|
+// VMATHDEF void vec4_makeunit(vec4 r); // r = r / |r| (use vec4_normalize(v, v))
 VMATHDEF void vec4_setcomp(vec4 r, scalar x, scalar y, scalar z, scalar w); // r = {x, y, z, w} (set components)
 VMATHDEF void vec4_setarr(vec4 r, scalar *u); // r = {u} (set array)
 VMATHDEF void vec4_copy(vec4 r, vec4 v); // r = v
@@ -54,6 +54,7 @@ VMATHDEF void vec4_from_vec2(vec4 r, vec2 v); // r = {v, 0, 0}
 VMATHDEF void vec4_from_vec3(vec4 r, vec3 v); // r = {v, 0}
 VMATHDEF void vec4_from_mat2(vec4 r, mat2 m); // r = {m[0], m[1]}
 VMATHDEF void vec4_smul(vec4 r, scalar s, vec4 v); // r = s * v (scalar multiplication)
+VMATHDEF void vec4_nscale(vec4 r, scalar s, vec4 v); // r = s * v / |v| (normalize and scale)
 VMATHDEF void vec4_negate(vec4 r, vec4 v); // r = -v
 VMATHDEF void vec4_normalize(vec4 r, vec4 v); // r = v / |v| (possible div. by 0)
 VMATHDEF void vec4_add(vec4 r, vec4 u, vec4 v); // r = u + v
@@ -74,13 +75,14 @@ VMATHDEF scalar vec3_distsqr(vec3 u, vec3 v);
 VMATHDEF scalar vec3_dist(vec3 u, vec3 v);
 VMATHDEF scalar vec3_dist1(vec3 u, vec3 v);
 VMATHDEF void vec3_zero(vec3 r);
-VMATHDEF void vec3_makeunit(vec3 r);
+// VMATHDEF void vec3_makeunit(vec3 r);
 VMATHDEF void vec3_setcomp(vec3 r, scalar x, scalar y, scalar z);
 VMATHDEF void vec3_setarr(vec3 r, scalar *u);
 VMATHDEF void vec3_copy(vec3 r, vec3 v);
 VMATHDEF void vec3_from_vec2(vec3 r, vec2 v);
 VMATHDEF void vec3_from_vec4(vec3 r, vec4 v);
 VMATHDEF void vec3_smul(vec3 r, scalar s, vec3 v);
+VMATHDEF void vec3_nscale(vec3 r, scalar s, vec3 v);
 VMATHDEF void vec3_negate(vec3 r, vec3 v);
 VMATHDEF void vec3_normalize(vec3 r, vec3 v);
 VMATHDEF void vec3_add(vec3 r, vec3 u, vec3 v);
@@ -101,13 +103,14 @@ VMATHDEF scalar vec2_distsqr(vec2 u, vec2 v);
 VMATHDEF scalar vec2_dist(vec2 u, vec2 v);
 VMATHDEF scalar vec2_dist1(vec2 u, vec2 v);
 VMATHDEF void vec2_zero(vec2 r);
-VMATHDEF void vec2_makeunit(vec2 r);
+// VMATHDEF void vec2_makeunit(vec2 r);
 VMATHDEF void vec2_setcomp(vec2 r, scalar x, scalar y);
 VMATHDEF void vec2_setarr(vec2 r, scalar *u);
 VMATHDEF void vec2_copy(vec2 r, vec2 v);
 VMATHDEF void vec2_from_vec3(vec2 r, vec3 v);
 VMATHDEF void vec2_from_vec4(vec2 r, vec4 v);
 VMATHDEF void vec2_smul(vec2 r, scalar s, vec2 v);
+VMATHDEF void vec2_nscale(vec2 r, scalar s, vec2 v);
 VMATHDEF void vec2_negate(vec2 r, vec2 v);
 VMATHDEF void vec2_normalize(vec2 r, vec2 v);
 VMATHDEF void vec2_add(vec2 r, vec2 u, vec2 v);
@@ -126,20 +129,19 @@ VMATHDEF void vec4_cross(vec4 r, vec4 u, vec4 v); // r = {vec3(u) x vec3(v), 0}
 VMATHDEF void plane_from_points(plane r, vec3 a, vec3 b, vec3 c);
 VMATHDEF void vec3_plane_project(vec3 r, vec3 v, plane p); // same as vec3_project (p has unit normal)
 VMATHDEF void vec3_plane_reflect(vec3 r, vec3 v, plane p); // same as vec3_reflect
-VMATHDEF void plane_makeunit(plane r); // make normal of p unit
+// VMATHDEF void plane_makeunit(plane r); // make normal of p unit (use plane_normalize(p, p))
 VMATHDEF void plane_normalize(plane r, plane p); // normalize the normal 
 
 // mat4 common
 VMATHDEF void mat4_zero(mat4 r); // r = 0
 VMATHDEF void mat4_id(mat4 r); // r = I
-VMATHDEF void mat4_t(mat4 r); // r = r^T
-VMATHDEF void mat4_eq_rotx(mat4 r, scalar a); // r = R_x (rotation matrix around x with angle a)
-VMATHDEF void mat4_eq_roty(mat4 r, scalar a); // r = R_y
-VMATHDEF void mat4_eq_rotz(mat4 r, scalar a); // r = R_z
-VMATHDEF void mat4_eq_rotaxis(mat4 r, vec3 u, scalar a); // r = R_u (rotation matrix around v with angle a)
-VMATHDEF void mat4_eq_scale(mat4 r, scalar sx, scalar sy, scalar sz); // r = scale matrix
+VMATHDEF void mat4_rx(mat4 r, scalar a); // r = R_x (rotation matrix around x with angle a)
+VMATHDEF void mat4_ry(mat4 r, scalar a); // r = R_y
+VMATHDEF void mat4_rz(mat4 r, scalar a); // r = R_z
+VMATHDEF void mat4_rv(mat4 r, scalar a, scalar x, scalar y, scalar z); // r = R_v (around v:(x,y,z) with angle a)
+VMATHDEF void mat4_sv(mat4 r, scalar sx, scalar sy, scalar sz); // r = scale matrix
 VMATHDEF void mat4_eq_shear(mat4 r, scalar xy, scalar xz, scalar yx, scalar yz, scalar zx, scalar zy); // xy: of x along y
-VMATHDEF void mat4_eq_trans(mat4 r, scalar tx, scalar ty, scalar tz); // r = translation matrix
+VMATHDEF void mat4_tv(mat4 r, scalar tx, scalar ty, scalar tz); // r = translation matrix
 VMATHDEF void mat4_setarr(mat4 r, scalar *s); // r = [s]
 VMATHDEF void mat4_copy(mat4 r, mat4 m); // r = m
 VMATHDEF void mat4_from_mat3(mat4 r, mat3 m);
@@ -178,6 +180,7 @@ VMATHDEF void vec4_mul_mat4(vec4 r, vec4 v, mat4 m); // r = vm
 VMATHDEF void vec4_mat4_mul(vec4 r, mat4 m, vec4 v); // r = mv
 VMATHDEF void vec3_mat4_mul(vec3 r, mat4 m, vec3 v); // r = mv (affine)
 VMATHDEF void mat4_transpose(mat4 r, mat4 m); // r = m^T
+VMATHDEF void mat4_transposed(mat4 r); // r = r^T
 VMATHDEF void mat4_inverse(mat4 r, mat4 m); // r = inverse(m) (r != m)
 VMATHDEF void vec4_mat4_trace(vec4 r, mat4 m); // return trace (as) vector
 VMATHDEF scalar mat4_trace(mat4 m); // return trace
@@ -187,14 +190,13 @@ VMATHDEF scalar mat4_det(mat4 m); // return determinant of m
 // mat3x4 common
 VMATHDEF void mat3x4_zero(mat3x4 r);
 VMATHDEF void mat3x4_id(mat3x4 r);
-VMATHDEF void mat3x4_t(mat3x4 r);
-VMATHDEF void mat3x4_eq_rotx(mat3x4 r, scalar a);
-VMATHDEF void mat3x4_eq_roty(mat3x4 r, scalar a);
-VMATHDEF void mat3x4_eq_rotz(mat3x4 r, scalar a);
-VMATHDEF void mat3x4_eq_rotaxis(mat3x4 r, vec3 u, scalar a);
-VMATHDEF void mat3x4_eq_scale(mat3x4 r, scalar sx, scalar sy, scalar sz);
+VMATHDEF void mat3x4_rx(mat3x4 r, scalar a);
+VMATHDEF void mat3x4_ry(mat3x4 r, scalar a);
+VMATHDEF void mat3x4_rz(mat3x4 r, scalar a);
+VMATHDEF void mat3x4_rv(mat3x4 r, scalar a, scalar x, scalar y, scalar z);
+VMATHDEF void mat3x4_sv(mat3x4 r, scalar sx, scalar sy, scalar sz);
 VMATHDEF void mat3x4_eq_shear(mat3x4 r, scalar xy, scalar xz, scalar yx, scalar yz, scalar zx, scalar zy);
-VMATHDEF void mat3x4_eq_trans(mat3x4 r, scalar tx, scalar ty, scalar tz);
+VMATHDEF void mat3x4_tv(mat3x4 r, scalar tx, scalar ty, scalar tz);
 VMATHDEF void mat3x4_setarr(mat3x4 r, scalar *s);
 VMATHDEF void mat3x4_copy(mat3x4 r, mat3x4 m);
 VMATHDEF void mat3x4_from_mat3(mat3x4 r, mat3 m);
@@ -231,6 +233,7 @@ VMATHDEF void vec4_mul_mat3x4(vec4 r, vec4 v, mat3x4 m);
 VMATHDEF void vec4_mat3x4_mul(vec4 r, mat3x4 m, vec4 v);
 VMATHDEF void vec3_mat3x4_mul(vec3 r, mat3x4 m, vec3 v);
 VMATHDEF void mat3x4_transpose(mat3x4 r, mat3x4 m);
+VMATHDEF void mat3x4_transposed(mat3x4 r);
 VMATHDEF void mat3x4_inverse(mat3x4 r, mat3x4 m);
 VMATHDEF void vec3_mat3x4_trace(vec3 r, mat3x4 m);
 VMATHDEF scalar mat3x4_trace(mat3x4 m);
@@ -239,14 +242,13 @@ VMATHDEF scalar mat3x4_det(mat3x4 m);
 // mat3 common
 VMATHDEF void mat3_zero(mat3 r);
 VMATHDEF void mat3_id(mat3 r);
-VMATHDEF void mat3_t(mat3 r);
-VMATHDEF void mat3_eq_rotx(mat3 r, scalar a);
-VMATHDEF void mat3_eq_roty(mat3 r, scalar a);
-VMATHDEF void mat3_eq_rotz(mat3 r, scalar a);
-VMATHDEF void mat3_eq_rot2d(mat3 r, scalar a);
-VMATHDEF void mat3_eq_rotaxis(mat3 r, vec3 u, scalar a);
+VMATHDEF void mat3_rx(mat3 r, scalar a);
+VMATHDEF void mat3_ry(mat3 r, scalar a);
+VMATHDEF void mat3_rz(mat3 r, scalar a);
+VMATHDEF void mat3_r2d(mat3 r, scalar a);
+VMATHDEF void mat3_rv(mat3 r, scalar a, scalar x, scalar y, scalar z);
 VMATHDEF void mat3_eq_trans2d(mat3 r, scalar tx, scalar ty);
-VMATHDEF void mat3_eq_scale(mat3 r, scalar sx, scalar sy, scalar sz);
+VMATHDEF void mat3_sv(mat3 r, scalar sx, scalar sy, scalar sz);
 VMATHDEF void mat3_eq_scale2d(mat3 r, scalar sx, scalar sy);
 VMATHDEF void mat3_eq_shear(mat3 r, scalar xy, scalar xz, scalar yx, scalar yz, scalar zx, scalar zy);
 VMATHDEF void mat3_eq_shear2d(mat3 r, scalar x, scalar y);
@@ -284,6 +286,7 @@ VMATHDEF void vec3_mul_mat3(vec3 r, vec3 v, mat3 m);
 VMATHDEF void vec3_mat3_mul(vec3 r, mat3 m, vec3 v);
 VMATHDEF void vec2_mat3_mul(vec2 r, mat3 m, vec2 v);
 VMATHDEF void mat3_transpose(mat3 r, mat3 m);
+VMATHDEF void mat3_transposed(mat3 r);
 VMATHDEF void mat3_inverse(mat3 r, mat3 m);
 VMATHDEF void vec3_mat3_trace(vec3 r, mat3 m);
 VMATHDEF scalar mat3_trace(mat3 m);
@@ -292,9 +295,8 @@ VMATHDEF scalar mat3_det(mat3 m);
 // mat2 common
 VMATHDEF void mat2_zero(mat2 r);
 VMATHDEF void mat2_id(mat2 r);
-VMATHDEF void mat2_t(mat2 r);
-VMATHDEF void mat2_eq_rot(mat2 r, scalar a); // around origin/z
-VMATHDEF void mat2_eq_scale(mat2 r, scalar sx, scalar sy);
+VMATHDEF void mat2_r(mat2 r, scalar a); // around origin/z
+VMATHDEF void mat2_sv(mat2 r, scalar sx, scalar sy);
 VMATHDEF void mat2_eq_shear(mat2 r, scalar x, scalar y);
 VMATHDEF void mat2_setarr(mat2 r, scalar *s);
 VMATHDEF void mat2_copy(mat2 r, mat2 m);
@@ -324,6 +326,7 @@ VMATHDEF void mat2_lerp(mat2 r, mat2 f, mat2 g, scalar t);
 VMATHDEF void vec2_mul_mat2(vec2 r, vec2 v, mat2 m);
 VMATHDEF void vec2_mat2_mul(vec2 r, mat2 m, vec2 v);
 VMATHDEF void mat2_transpose(mat2 r, mat2 m);
+VMATHDEF void mat2_transposed(mat2 r);
 VMATHDEF void mat2_inverse(mat2 r, mat2 m);
 VMATHDEF void vec2_mat2_trace(vec2 r, mat2 m);
 VMATHDEF scalar mat2_trace(mat2 m);
@@ -449,11 +452,11 @@ VMATHDEF void vec4_zero(vec4 r)
 	r[0] = r[1] = r[2] = r[3] = 0;
 }
 
-VMATHDEF void vec4_makeunit(vec4 r)
-{
-	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2] + r[3] * r[3]);
-	r[0] *= s; r[1] *= s; r[2] *= s; r[3] *= s;
-}
+//VMATHDEF void vec4_makeunit(vec4 r)
+//{
+//	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2] + r[3] * r[3]);
+//	r[0] *= s; r[1] *= s; r[2] *= s; r[3] *= s;
+//}
 
 VMATHDEF void vec4_setcomp(vec4 r, scalar x, scalar y, scalar z, scalar w)
 {
@@ -495,6 +498,12 @@ VMATHDEF void vec4_smul(vec4 r, scalar s, vec4 v)
 	r[2] = s * v[2]; r[3] = s * v[3];
 }
 
+VMATHDEF void vec4_nscale(vec4 r, scalar s, vec4 v)
+{
+	s = s / vsqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
+	r[0] = v[0] * s; r[1] = v[1] * s; r[2] = v[2] * s; r[3] = v[3] * s;
+}
+
 VMATHDEF void vec4_negate(vec4 r, vec4 v)
 {
 	r[0] = -(v[0]); r[1] = -(v[1]);
@@ -504,8 +513,7 @@ VMATHDEF void vec4_negate(vec4 r, vec4 v)
 VMATHDEF void vec4_normalize(vec4 r, vec4 v)
 {
 	scalar s = VP(1) / vsqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
-	r[0] = v[0] * s; r[1] = v[1] * s;
-	r[2] = v[2] * s; r[3] = v[3] * s;
+	r[0] = v[0] * s; r[1] = v[1] * s; r[2] = v[2] * s; r[3] = v[3] * s;
 }
 
 VMATHDEF void vec4_add(vec4 r, vec4 u, vec4 v)
@@ -609,11 +617,11 @@ VMATHDEF void vec3_zero(vec3 r)
 	r[0] = r[1] = r[2] = 0;
 }
 
-VMATHDEF void vec3_makeunit(vec3 r)
-{
-	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
-	r[0] *= s; r[1] *= s; r[2] *= s;
-}
+//VMATHDEF void vec3_makeunit(vec3 r)
+//{
+//	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
+//	r[0] *= s; r[1] *= s; r[2] *= s;
+//}
 
 VMATHDEF void vec3_setcomp(vec3 r, scalar x, scalar y, scalar z)
 {
@@ -643,6 +651,12 @@ VMATHDEF void vec3_from_vec4(vec3 r, vec4 v)
 VMATHDEF void vec3_smul(vec3 r, scalar s, vec3 v)
 {
 	r[0] = s * v[0]; r[1] = s * v[1]; r[2] = s * v[2];
+}
+
+VMATHDEF void vec3_nscale(vec3 r, scalar s, vec3 v)
+{
+	s = s / vsqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	r[0] = v[0] * s; r[1] = v[1] * s; r[2] = v[2] * s;
 }
 
 VMATHDEF void vec3_negate(vec3 r, vec3 v)
@@ -749,11 +763,11 @@ VMATHDEF void vec2_zero(vec2 r)
 	r[0] = r[1] = 0;
 }
 
-VMATHDEF void vec2_makeunit(vec2 r)
-{
-	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1]);
-	r[0] *= s; r[1] *= s;
-}
+//VMATHDEF void vec2_makeunit(vec2 r)
+//{
+//	scalar s = VP(1) / vsqrt(r[0] * r[0] + r[1] * r[1]);
+//	r[0] *= s; r[1] *= s;
+//}
 
 VMATHDEF void vec2_setcomp(vec2 r, scalar x, scalar y)
 {
@@ -783,6 +797,12 @@ VMATHDEF void vec2_from_vec4(vec2 r, vec4 v)
 VMATHDEF void vec2_smul(vec2 r, scalar s, vec2 v)
 {
 	r[0] = s * v[0]; r[1] = s * v[1];
+}
+
+VMATHDEF void vec2_nscale(vec2 r, scalar s, vec2 v)
+{
+	s = s / vsqrt(v[0] * v[0] + v[1] * v[1]);
+	r[0] = v[0] * s; r[1] = v[1] * s;
 }
 
 VMATHDEF void vec2_negate(vec2 r, vec2 v)
@@ -866,11 +886,11 @@ VMATHDEF void vec4_cross(vec4 r, vec4 u, vec4 v)
 
 VMATHDEF void plane_from_points(plane r, vec3 a, vec3 b, vec3 c)
 {
-	vec3 n, u, v;
-	vec3_sub(u, b, a);
+	vec3 n, v;
+	vec3_sub(n, b, a);
 	vec3_sub(v, c, a);
-	vec3_cross(n, u, v);
-	vec3_makeunit(n);
+	vec3_cross(n, n, v);
+	vec3_normalize(n, n);
 	r[0] = n[0]; r[1] = n[1]; r[2] = n[2];
 	r[3] = vec3_dot(a, n);
 }
@@ -889,13 +909,13 @@ VMATHDEF void vec3_plane_reflect(vec3 r, vec3 v, plane p)
 	vec3_reflect(r, v, n);
 }
 
-VMATHDEF void plane_makeunit(plane r)
-{
-	scalar s = vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
-	r[3] *= s;
-	s = VP(1) / s;
-	r[0] *= s; r[1] *= s; r[2] *= s;
-}
+//VMATHDEF void plane_makeunit(plane r)
+//{
+//	scalar s = vsqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
+//	r[3] *= s;
+//	s = VP(1) / s;
+//	r[0] *= s; r[1] *= s; r[2] *= s;
+//}
 
 VMATHDEF void plane_normalize(plane r, plane p)
 {
@@ -920,20 +940,7 @@ VMATHDEF void mat4_id(mat4 r)
 	r[0][0] = r[1][1] = r[2][2] = r[3][3] = VP(1);
 }
 
-VMATHDEF void mat4_t(mat4 r)
-{
-	scalar t;
-	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
-	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
-	t = r[0][3]; r[0][3] = r[3][0]; r[3][0] = t;
-	
-	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
-	t = r[1][3]; r[1][3] = r[3][1]; r[3][1] = t;
-	
-	t = r[2][3]; r[2][3] = r[3][2]; r[3][2] = t;
-}
-
-VMATHDEF void mat4_eq_rotx(mat4 r, scalar a)
+VMATHDEF void mat4_rx(mat4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat4));
 	scalar c = vcos(a), s = vsin(a);
@@ -942,7 +949,7 @@ VMATHDEF void mat4_eq_rotx(mat4 r, scalar a)
 	r[2][1] = s; r[2][2] =  c;
 }
 
-VMATHDEF void mat4_eq_roty(mat4 r, scalar a)
+VMATHDEF void mat4_ry(mat4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat4));
 	scalar c = vcos(a), s = vsin(a);
@@ -951,7 +958,7 @@ VMATHDEF void mat4_eq_roty(mat4 r, scalar a)
 	r[2][0] = -s; r[2][2] = c;
 }
 
-VMATHDEF void mat4_eq_rotz(mat4 r, scalar a)
+VMATHDEF void mat4_rz(mat4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat4));
 	scalar c = vcos(a), s = vsin(a);
@@ -960,27 +967,21 @@ VMATHDEF void mat4_eq_rotz(mat4 r, scalar a)
 	r[1][0] = s; r[1][1] =  c;
 }
 
-VMATHDEF void mat4_eq_rotaxis(mat4 r, vec3 u, scalar a)
+VMATHDEF void mat4_rv(mat4 r, scalar a, scalar x, scalar y, scalar z)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
 
-	scalar dxx = d * u[0] * u[0];
-	scalar dyy = d * u[1] * u[1];
-	scalar dzz = d * u[2] * u[2];
-	scalar dxy = d * u[0] * u[1];
-	scalar dxz = d * u[0] * u[2];
-	scalar dyz = d * u[1] * u[2];
-	
-	scalar sx = s * u[0], sy = s * u[1], sz = s * u[2];
+	scalar dxy = d * x * y, dxz = d * x * z, dyz = d * y * z;
+	scalar sx = s * x, sy = s * y, sz = s * z;
 
-	r[0][0] = c + dxx;  r[0][1] = dxy - sz; r[0][2] = dxz + sy; r[0][3] = 0;
-	r[1][0] = dxy + sz; r[1][1] = c + dyy;  r[1][2] = dyz - sx; r[1][3] = 0;
-	r[2][0] = dxz - sy; r[2][1] = dyz + sx; r[2][2] = c + dzz;  r[2][3] = 0;
-	r[3][0] = 0;        r[3][1] = 0;        r[3][2] = 0;        r[3][3] = VP(1);
+	r[0][0] = c + d*x*x; r[0][1] = dxy - sz;  r[0][2] = dxz + sy;  r[0][3] = 0;
+	r[1][0] = dxy + sz;  r[1][1] = c + d*y*y; r[1][2] = dyz - sx;  r[1][3] = 0;
+	r[2][0] = dxz - sy;  r[2][1] = dyz + sx;  r[2][2] = c + d*z*z; r[2][3] = 0;
+	r[3][0] = 0;         r[3][1] = 0;         r[3][2] = 0;         r[3][3] = VP(1);
 }
 
-VMATHDEF void mat4_eq_scale(mat4 r, scalar sx, scalar sy, scalar sz)
+VMATHDEF void mat4_sv(mat4 r, scalar sx, scalar sy, scalar sz)
 {
 	vmemset(r, 0, sizeof(mat4));
 	r[0][0] = sx; r[1][1] = sy; r[2][2] = sz; r[3][3] = VP(1);
@@ -994,7 +995,7 @@ VMATHDEF void mat4_eq_shear(mat4 r, scalar xy, scalar xz, scalar yx, scalar yz, 
 	r[3][0] = 0; r[3][1] = 0; r[3][2] = 0; r[3][3] = VP(1);
 }
 
-VMATHDEF void mat4_eq_trans(mat4 r, scalar tx, scalar ty, scalar tz)
+VMATHDEF void mat4_tv(mat4 r, scalar tx, scalar ty, scalar tz)
 {
 	vmemset(r, 0, sizeof(mat4));
 	r[0][0] = r[1][1] = r[2][2] = r[3][3] = VP(1);
@@ -1029,18 +1030,22 @@ VMATHDEF void mat4_from_mat3x4(mat4 r, mat3x4 m)
 
 VMATHDEF void mat4_setrows(mat4 r, vec4 ra, vec4 rb, vec4 rc, vec4 rd)
 {
-	vec4_copy(r[0], ra);
-	vec4_copy(r[1], rb);
-	vec4_copy(r[2], rc);
-	vec4_copy(r[3], rd);
+	mat4 m;
+	vec4_copy(m[0], ra);
+	vec4_copy(m[1], rb);
+	vec4_copy(m[2], rc);
+	vec4_copy(m[3], rd);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat4_setcols(mat4 r, vec4 cx, vec4 cy, vec4 cz, vec4 cw)
 {
-	vec4_setcomp(r[0], cx[0], cy[0], cz[0], cw[0]);
-	vec4_setcomp(r[1], cx[1], cy[1], cz[1], cw[1]);
-	vec4_setcomp(r[2], cx[2], cy[2], cz[2], cw[2]);
-	vec4_setcomp(r[3], cx[3], cy[3], cz[3], cw[3]);
+	mat4 m;
+	vec4_setcomp(m[0], cx[0], cy[0], cz[0], cw[0]);
+	vec4_setcomp(m[1], cx[1], cy[1], cz[1], cw[1]);
+	vec4_setcomp(m[2], cx[2], cy[2], cz[2], cw[2]);
+	vec4_setcomp(m[3], cx[3], cy[3], cz[3], cw[3]);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat4_setrowa(mat4 r, vec4 v) { vec4_copy(r[0], v); }
@@ -1050,22 +1055,26 @@ VMATHDEF void mat4_setrowd(mat4 r, vec4 v) { vec4_copy(r[3], v); }
 
 VMATHDEF void mat4_setcolx(mat4 r, vec4 v)
 {
-	r[0][0] = v[0]; r[1][0] = v[1]; r[2][0] = v[2]; r[3][0] = v[3];
+	scalar a = v[0], b = v[1], c = v[2], d = v[3]; 
+	r[0][0] = a; r[1][0] = b; r[2][0] = c; r[3][0] = d;
 }
 
 VMATHDEF void mat4_setcoly(mat4 r, vec4 v)
 {
-	r[0][1] = v[0]; r[1][1] = v[1]; r[2][1] = v[2]; r[3][1] = v[3];
+	scalar a = v[0], b = v[1], c = v[2], d = v[3];
+	r[0][1] = a; r[1][1] = b; r[2][1] = c; r[3][1] = d;
 }
 
 VMATHDEF void mat4_setcolz(mat4 r, vec4 v)
 {
-	r[0][2] = v[0]; r[1][2] = v[1]; r[2][2] = v[2]; r[3][2] = v[3];
+	scalar a = v[0], b = v[1], c = v[2], d = v[3];
+	r[0][2] = a; r[1][2] = b; r[2][2] = c; r[3][2] = d;
 }
 
 VMATHDEF void mat4_setcolw(mat4 r, vec4 v)
 {
-	r[0][3] = v[0]; r[1][3] = v[1]; r[2][3] = v[2]; r[3][3] = v[3];
+	scalar a = v[0], b = v[1], c = v[2], d = v[3];
+	r[0][3] = a; r[1][3] = b; r[2][3] = c; r[3][3] = d;
 }
 
 VMATHDEF void vec4_mat4_rowa(vec4 r, mat4 m) { vec4_copy(r, m[0]); }
@@ -1096,10 +1105,11 @@ VMATHDEF void mat4_mulrows(mat4 r, mat4 m, scalar a, scalar b, scalar c, scalar 
 
 VMATHDEF void mat4_mulrowv(mat4 r, mat4 m, vec4 v)
 {
-	vec4_smul(r[0], v[0], m[0]);
-	vec4_smul(r[1], v[1], m[1]);
-	vec4_smul(r[2], v[2], m[2]);
-	vec4_smul(r[3], v[3], m[3]);
+	scalar a = v[0], b = v[1], c = v[2], d = v[3];
+	vec4_smul(r[0], a, m[0]);
+	vec4_smul(r[1], b, m[1]);
+	vec4_smul(r[2], c, m[2]);
+	vec4_smul(r[3], d, m[3]);
 }
 
 VMATHDEF void mat4_negate(mat4 r, mat4 m)
@@ -1176,30 +1186,27 @@ VMATHDEF void mat4_lerp(mat4 r, mat4 f, mat4 g, scalar t)
 
 VMATHDEF void vec4_mul_mat4(vec4 r, vec4 v, mat4 m)
 {
-	scalar x, y, z, w;
-	x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2] + m[3][0] * v[3];
-	y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2] + m[3][1] * v[3];
-	z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2] + m[3][2] * v[3];
-	w = m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3] * v[3];
+	scalar x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2] + m[3][0] * v[3];
+	scalar y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2] + m[3][1] * v[3];
+	scalar z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2] + m[3][2] * v[3];
+	scalar w = m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3] * v[3];
 	r[0] = x; r[1] = y; r[2] = z; r[3] = w;
 }
 
 VMATHDEF void vec4_mat4_mul(vec4 r, mat4 m, vec4 v)
 {
-	scalar x, y, z, w;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3];
-	z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3];
-	w = m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2] + m[3][3] * v[3];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3];
+	scalar z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3];
+	scalar w = m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2] + m[3][3] * v[3];
 	r[0] = x; r[1] = y; r[2] = z; r[3] = w;
 }
 
 VMATHDEF void vec3_mat4_mul(vec3 r, mat4 m, vec3 v)
 {
-	scalar x, y, z;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3];
-	z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3];
+	scalar z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3];
 	r[0] = x; r[1] = y; r[2] = z;
 }
 
@@ -1218,27 +1225,36 @@ VMATHDEF void mat4_transpose(mat4 r, mat4 m)
 	r[0][0] = m[0][0]; r[1][1] = m[1][1]; r[2][2] = m[2][2]; r[3][3] = m[3][3];
 }
 
+VMATHDEF void mat4_transposed(mat4 r)
+{
+	scalar t;
+	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
+	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
+	t = r[0][3]; r[0][3] = r[3][0]; r[3][0] = t;
+	
+	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
+	t = r[1][3]; r[1][3] = r[3][1]; r[3][1] = t;
+	
+	t = r[2][3]; r[2][3] = r[3][2]; r[3][2] = t;
+}
+
 VMATHDEF void mat4_inverse(mat4 r, mat4 m)
 {
-	scalar s0, s1, s2, s3, s4, s5;
-	scalar c0, c1, c2, c3, c4, c5;
-	scalar invdet;
+	scalar c0 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+	scalar c1 = m[0][0] * m[1][2] - m[0][2] * m[1][0];
+	scalar c2 = m[0][0] * m[1][3] - m[0][3] * m[1][0];
+	scalar c3 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
+	scalar c4 = m[0][1] * m[1][3] - m[0][3] * m[1][1];
+	scalar c5 = m[0][2] * m[1][3] - m[0][3] * m[1][2];
 	
-	c0 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
-	c1 = m[0][0] * m[1][2] - m[0][2] * m[1][0];
-	c2 = m[0][0] * m[1][3] - m[0][3] * m[1][0];
-	c3 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
-	c4 = m[0][1] * m[1][3] - m[0][3] * m[1][1];
-	c5 = m[0][2] * m[1][3] - m[0][3] * m[1][2];
+	scalar s0 = m[2][0] * m[3][1] - m[2][1] * m[3][0];
+	scalar s1 = m[2][0] * m[3][2] - m[2][2] * m[3][0];
+	scalar s2 = m[2][0] * m[3][3] - m[2][3] * m[3][0];
+	scalar s3 = m[2][1] * m[3][2] - m[2][2] * m[3][1];
+	scalar s4 = m[2][1] * m[3][3] - m[2][3] * m[3][1];
+	scalar s5 = m[2][2] * m[3][3] - m[2][3] * m[3][2];
 	
-	s0 = m[2][0] * m[3][1] - m[2][1] * m[3][0];
-	s1 = m[2][0] * m[3][2] - m[2][2] * m[3][0];
-	s2 = m[2][0] * m[3][3] - m[2][3] * m[3][0];
-	s3 = m[2][1] * m[3][2] - m[2][2] * m[3][1];
-	s4 = m[2][1] * m[3][3] - m[2][3] * m[3][1];
-	s5 = m[2][2] * m[3][3] - m[2][3] * m[3][2];
-	
-	invdet = VP(1) / (c0 * s5 - c1 * s4 + c2 * s3 + c3 * s2 - c4 * s1 + c5 * s0);
+	scalar invdet = VP(1) / (c0 * s5 - c1 * s4 + c2 * s3 + c3 * s2 - c4 * s1 + c5 * s0);
 	
 	r[0][0] =  (m[1][1] * s5 - m[1][2] * s4 + m[1][3] * s3) * invdet;
 	r[0][1] = -(m[0][1] * s5 - m[0][2] * s4 + m[0][3] * s3) * invdet;
@@ -1263,8 +1279,7 @@ VMATHDEF void mat4_inverse(mat4 r, mat4 m)
 
 VMATHDEF void vec4_mat4_trace(vec4 r, mat4 m)
 {
-	r[0] = m[0][0]; r[1] = m[1][1];
-	r[2] = m[2][2]; r[3] = m[3][3];
+	vec4_setcomp(r, m[0][0], m[1][1], m[2][2], m[3][3]);
 }
 
 VMATHDEF scalar mat4_trace(mat4 m)
@@ -1306,16 +1321,7 @@ VMATHDEF void mat3x4_id(mat3x4 r)
 	r[0][0] = r[1][1] = r[2][2] = VP(1);
 }
 
-VMATHDEF void mat3x4_t(mat3x4 r)
-{
-	scalar t;
-	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
-	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
-	
-	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
-}
-
-VMATHDEF void mat3x4_eq_rotx(mat3x4 r, scalar a)
+VMATHDEF void mat3x4_rx(mat3x4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3x4));
 	scalar c = vcos(a), s = vsin(a);
@@ -1324,7 +1330,7 @@ VMATHDEF void mat3x4_eq_rotx(mat3x4 r, scalar a)
 	r[2][1] = s; r[2][2] =  c;
 }
 
-VMATHDEF void mat3x4_eq_roty(mat3x4 r, scalar a)
+VMATHDEF void mat3x4_ry(mat3x4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3x4));
 	scalar c = vcos(a), s = vsin(a);
@@ -1333,7 +1339,7 @@ VMATHDEF void mat3x4_eq_roty(mat3x4 r, scalar a)
 	r[2][0] = -s; r[2][2] = c;
 }
 
-VMATHDEF void mat3x4_eq_rotz(mat3x4 r, scalar a)
+VMATHDEF void mat3x4_rz(mat3x4 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3x4));
 	scalar c = vcos(a), s = vsin(a);
@@ -1342,26 +1348,20 @@ VMATHDEF void mat3x4_eq_rotz(mat3x4 r, scalar a)
 	r[1][0] = s; r[1][1] =  c;
 }
 
-VMATHDEF void mat3x4_eq_rotaxis(mat3x4 r, vec3 u, scalar a)
+VMATHDEF void mat3x4_rv(mat3x4 r, scalar a, scalar x, scalar y, scalar z)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
 
-	scalar dxx = d * u[0] * u[0];
-	scalar dyy = d * u[1] * u[1];
-	scalar dzz = d * u[2] * u[2];
-	scalar dxy = d * u[0] * u[1];
-	scalar dxz = d * u[0] * u[2];
-	scalar dyz = d * u[1] * u[2];
-	
-	scalar sx = s * u[0], sy = s * u[1], sz = s * u[2];
+	scalar dxy = d * x * y, dxz = d * x * z, dyz = d * y * z;
+	scalar sx = s * x, sy = s * y, sz = s * z;
 
-	r[0][0] = c + dxx;  r[0][1] = dxy - sz; r[0][2] = dxz + sy; r[0][3] = 0;
-	r[1][0] = dxy + sz; r[1][1] = c + dyy;  r[1][2] = dyz - sx; r[1][3] = 0;
-	r[2][0] = dxz - sy; r[2][1] = dyz + sx; r[2][2] = c + dzz;  r[2][3] = 0;
+	r[0][0] = c + d*x*x; r[0][1] = dxy - sz;  r[0][2] = dxz + sy;  r[0][3] = 0;
+	r[1][0] = dxy + sz;  r[1][1] = c + d*y*y; r[1][2] = dyz - sx;  r[1][3] = 0;
+	r[2][0] = dxz - sy;  r[2][1] = dyz + sx;  r[2][2] = c + d*z*z; r[2][3] = 0;
 }
 
-VMATHDEF void mat3x4_eq_scale(mat3x4 r, scalar sx, scalar sy, scalar sz)
+VMATHDEF void mat3x4_sv(mat3x4 r, scalar sx, scalar sy, scalar sz)
 {
 	vmemset(r, 0, sizeof(mat3x4));
 	r[0][0] = sx; r[1][1] = sy; r[2][2] = sz;
@@ -1374,7 +1374,7 @@ VMATHDEF void mat3x4_eq_shear(mat3x4 r, scalar xy, scalar xz, scalar yx, scalar 
 	r[2][0] = zx;    r[2][1] = zy;    r[2][2] = VP(1); r[2][3] = 0;
 }
 
-VMATHDEF void mat3x4_eq_trans(mat3x4 r, scalar tx, scalar ty, scalar tz)
+VMATHDEF void mat3x4_tv(mat3x4 r, scalar tx, scalar ty, scalar tz)
 {
 	vmemset(r, 0, sizeof(mat3x4));
 	r[0][0] = r[1][1] = r[2][2] = VP(1);
@@ -1407,16 +1407,20 @@ VMATHDEF void mat3x4_from_mat4(mat3x4 r, mat4 m)
 
 VMATHDEF void mat3x4_setrows(mat3x4 r, vec4 ra, vec4 rb, vec4 rc)
 {
-	vec4_copy(r[0], ra);
-	vec4_copy(r[1], rb);
-	vec4_copy(r[2], rc);
+	mat3x4 m;
+	vec4_copy(m[0], ra);
+	vec4_copy(m[1], rb);
+	vec4_copy(m[2], rc);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat3x4_setcols(mat3x4 r, vec3 cx, vec3 cy, vec3 cz, vec3 cw)
 {
-	vec4_setcomp(r[0], cx[0], cy[0], cz[0], cw[0]);
-	vec4_setcomp(r[1], cx[1], cy[1], cz[1], cw[1]);
-	vec4_setcomp(r[2], cx[2], cy[2], cz[2], cw[2]);
+	mat3x4 m;
+	vec4_setcomp(m[0], cx[0], cy[0], cz[0], cw[0]);
+	vec4_setcomp(m[1], cx[1], cy[1], cz[1], cw[1]);
+	vec4_setcomp(m[2], cx[2], cy[2], cz[2], cw[2]);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat3x4_setrowa(mat3x4 r, vec4 v) { vec4_copy(r[0], v); }
@@ -1425,22 +1429,26 @@ VMATHDEF void mat3x4_setrowc(mat3x4 r, vec4 v) { vec4_copy(r[2], v); }
 
 VMATHDEF void mat3x4_setcolx(mat3x4 r, vec3 v)
 {
-	r[0][0] = v[0]; r[1][0] = v[1]; r[2][0] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][0] = a; r[1][0] = b; r[2][0] = c;
 }
 
 VMATHDEF void mat3x4_setcoly(mat3x4 r, vec3 v)
 {
-	r[0][1] = v[0]; r[1][1] = v[1]; r[2][1] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][1] = a; r[1][1] = b; r[2][1] = c;
 }
 
 VMATHDEF void mat3x4_setcolz(mat3x4 r, vec3 v)
 {
-	r[0][2] = v[0]; r[1][2] = v[1]; r[2][2] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][2] = a; r[1][2] = b; r[2][2] = c;
 }
 
 VMATHDEF void mat3x4_setcolw(mat3x4 r, vec3 v)
 {
-	r[0][3] = v[0]; r[1][3] = v[1]; r[2][3] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][3] = a; r[1][3] = b; r[2][3] = c;
 }
 
 VMATHDEF void vec4_mat3x4_rowa(vec4 r, mat3x4 m) { vec4_copy(r, m[0]); }
@@ -1468,9 +1476,10 @@ VMATHDEF void mat3x4_mulrows(mat3x4 r, mat3x4 m, scalar a, scalar b, scalar c)
 
 VMATHDEF void mat3x4_mulrowv(mat3x4 r, mat3x4 m, vec3 v)
 {
-	vec4_smul(r[0], v[0], m[0]);
-	vec4_smul(r[1], v[1], m[1]);
-	vec4_smul(r[2], v[2], m[2]);
+	scalar a = v[0], b = v[1], c = v[2];
+	vec4_smul(r[0], a, m[0]);
+	vec4_smul(r[1], b, m[1]);
+	vec4_smul(r[2], c, m[2]);
 }
 
 VMATHDEF void mat3x4_negate(mat3x4 r, mat3x4 m)
@@ -1542,30 +1551,27 @@ VMATHDEF void mat3x4_lerp(mat3x4 r, mat3x4 f, mat3x4 g, scalar t)
 
 VMATHDEF void vec4_mul_mat3x4(vec4 r, vec4 v, mat3x4 m)
 {
-	scalar x, y, z, w;
-	x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
-	y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
-	z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
-	w = m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + v[3];
+	scalar x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
+	scalar y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
+	scalar z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
+	scalar w = m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + v[3];
 	r[0] = x; r[1] = y; r[2] = z; r[3] = w;
 }
 
 VMATHDEF void vec4_mat3x4_mul(vec4 r, mat3x4 m, vec4 v)
 {
-	scalar x, y, z, w;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3];
-	z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3];
-	w = v[3];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3];
+	scalar z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3];
+	scalar w = v[3];
 	r[0] = x; r[1] = y; r[2] = z; r[3] = w;
 }
 
 VMATHDEF void vec3_mat3x4_mul(vec3 r, mat3x4 m, vec3 v)
 {
-	scalar x, y, z;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3];
-	z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3];
+	scalar z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3];
 	r[0] = x; r[1] = y; r[2] = z;
 }
 
@@ -1581,19 +1587,25 @@ VMATHDEF void mat3x4_transpose(mat3x4 r, mat3x4 m)
 	r[0][3] = m[0][3]; r[1][3] = m[1][3]; r[2][3] = m[2][3];
 }
 
+VMATHDEF void mat3x4_transposed(mat3x4 r)
+{
+	scalar t;
+	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
+	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
+	
+	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
+}
+
 VMATHDEF void mat3x4_inverse(mat3x4 r, mat3x4 m)
 {
-	scalar c0, c1, c2, c3, c4, c5;
-	scalar invdet;
+	scalar c0 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+	scalar c1 = m[0][0] * m[1][2] - m[0][2] * m[1][0];
+	scalar c2 = m[0][0] * m[1][3] - m[0][3] * m[1][0];
+	scalar c3 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
+	scalar c4 = m[0][1] * m[1][3] - m[0][3] * m[1][1];
+	scalar c5 = m[0][2] * m[1][3] - m[0][3] * m[1][2];
 	
-	c0 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
-	c1 = m[0][0] * m[1][2] - m[0][2] * m[1][0];
-	c2 = m[0][0] * m[1][3] - m[0][3] * m[1][0];
-	c3 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
-	c4 = m[0][1] * m[1][3] - m[0][3] * m[1][1];
-	c5 = m[0][2] * m[1][3] - m[0][3] * m[1][2];
-	
-	invdet = VP(1) / (m[2][0] * c3 - m[2][1] * c1 + m[2][2] * c0);
+	scalar invdet = VP(1) / (m[2][0] * c3 - m[2][1] * c1 + m[2][2] * c0);
 	
 	r[0][0] =  (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invdet;
 	r[0][1] = -(m[0][1] * m[2][2] - m[0][2] * m[2][1]) * invdet;
@@ -1613,7 +1625,7 @@ VMATHDEF void mat3x4_inverse(mat3x4 r, mat3x4 m)
 
 VMATHDEF void vec3_mat3x4_trace(vec3 r, mat3x4 m)
 {
-	r[0] = m[0][0]; r[1] = m[1][1]; r[2] = m[2][2];
+	vec3_setcomp(r, m[0][0], m[1][1], m[2][2]);
 }
 
 VMATHDEF scalar mat3x4_trace(mat3x4 m)
@@ -1644,16 +1656,7 @@ VMATHDEF void mat3_id(mat3 r)
 	r[0][0] = r[1][1] = r[2][2] = VP(1);
 }
 
-VMATHDEF void mat3_t(mat3 r)
-{
-	scalar t;
-	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
-	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
-	
-	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
-}
-
-VMATHDEF void mat3_eq_rotx(mat3 r, scalar a)
+VMATHDEF void mat3_rx(mat3 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3));
 	scalar c = vcos(a), s = vsin(a);
@@ -1662,7 +1665,7 @@ VMATHDEF void mat3_eq_rotx(mat3 r, scalar a)
 	r[2][1] = s; r[2][2] =  c;
 }
 
-VMATHDEF void mat3_eq_roty(mat3 r, scalar a)
+VMATHDEF void mat3_ry(mat3 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3));
 	scalar c = vcos(a), s = vsin(a);
@@ -1671,7 +1674,7 @@ VMATHDEF void mat3_eq_roty(mat3 r, scalar a)
 	r[2][0] = -s; r[2][2] = c;
 }
 
-VMATHDEF void mat3_eq_rotz(mat3 r, scalar a)
+VMATHDEF void mat3_rz(mat3 r, scalar a)
 {
 	vmemset(r, 0, sizeof(mat3));
 	scalar c = vcos(a), s = vsin(a);
@@ -1680,28 +1683,23 @@ VMATHDEF void mat3_eq_rotz(mat3 r, scalar a)
 	r[1][0] = s; r[1][1] =  c;
 }
 
-VMATHDEF void mat3_eq_rot2d(mat3 r, scalar a)
+VMATHDEF void mat3_r2d(mat3 r, scalar a)
 {
-	mat3_eq_rotz(r, a);
+	mat3_rz(r, a);
 }
 
-VMATHDEF void mat3_eq_rotaxis(mat3 r, vec3 u, scalar a)
+VMATHDEF void mat3_rv(mat3 r, scalar a, scalar x, scalar y, scalar z)
 {
 	scalar s = vsin(a), c = vcos(a);
 	scalar d = 1 - c;
 
-	scalar dxx = d * u[0] * u[0];
-	scalar dyy = d * u[1] * u[1];
-	scalar dzz = d * u[2] * u[2];
-	scalar dxy = d * u[0] * u[1];
-	scalar dxz = d * u[0] * u[2];
-	scalar dyz = d * u[1] * u[2];
+	scalar dxy = d * x * y, dxz = d * x * z, dyz = d * y * z;
 	
-	scalar sx = s * u[0], sy = s * u[1], sz = s * u[2];
+	scalar sx = s * x, sy = s * y, sz = s * z;
 
-	r[0][0] = c + dxx;  r[0][1] = dxy - sz; r[0][2] = dxz + sy;
-	r[1][0] = dxy + sz; r[1][1] = c + dyy;  r[1][2] = dyz - sx;
-	r[2][0] = dxz - sy; r[2][1] = dyz + sx; r[2][2] = c + dzz;
+	r[0][0] = c + d*x*x; r[0][1] = dxy - sz;  r[0][2] = dxz + sy;
+	r[1][0] = dxy + sz;  r[1][1] = c + d*y*y; r[1][2] = dyz - sx;
+	r[2][0] = dxz - sy;  r[2][1] = dyz + sx;  r[2][2] = c + d*z*z;
 }
 
 VMATHDEF void mat3_eq_trans2d(mat3 r, scalar tx, scalar ty)
@@ -1711,7 +1709,7 @@ VMATHDEF void mat3_eq_trans2d(mat3 r, scalar tx, scalar ty)
 	r[0][2] = tx; r[1][2] = ty;
 }
 
-VMATHDEF void mat3_eq_scale(mat3 r, scalar sx, scalar sy, scalar sz)
+VMATHDEF void mat3_sv(mat3 r, scalar sx, scalar sy, scalar sz)
 {
 	vmemset(r, 0, sizeof(mat3));
 	r[0][0] = sx; r[1][1] = sy; r[2][2] = sz;
@@ -1763,16 +1761,20 @@ VMATHDEF void mat3_from_mat3x4(mat3 r, mat3x4 m)
 
 VMATHDEF void mat3_setrows(mat3 r, vec3 ra, vec3 rb, vec3 rc)
 {
-	vec3_copy(r[0], ra);
-	vec3_copy(r[1], rb);
-	vec3_copy(r[2], rc);
+	mat3 m;
+	vec3_copy(m[0], ra);
+	vec3_copy(m[1], rb);
+	vec3_copy(m[2], rc);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat3_setcols(mat3 r, vec3 cx, vec3 cy, vec3 cz)
 {
-	vec3_setcomp(r[0], cx[0], cy[0], cz[0]);
-	vec3_setcomp(r[1], cx[1], cy[1], cz[1]);
-	vec3_setcomp(r[2], cx[2], cy[2], cz[2]);
+	mat3 m;
+	vec3_setcomp(m[0], cx[0], cy[0], cz[0]);
+	vec3_setcomp(m[1], cx[1], cy[1], cz[1]);
+	vec3_setcomp(m[2], cx[2], cy[2], cz[2]);
+	vmemcpy(r, m, sizeof m);
 }
 
 VMATHDEF void mat3_setrowa(mat3 r, vec3 v) { vec3_copy(r[0], v); }
@@ -1781,17 +1783,20 @@ VMATHDEF void mat3_setrowc(mat3 r, vec3 v) { vec3_copy(r[2], v); }
 
 VMATHDEF void mat3_setcolx(mat3 r, vec3 v)
 {
-	r[0][0] = v[0]; r[1][0] = v[1]; r[2][0] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][0] = a; r[1][0] = b; r[2][0] = c;
 }
 
 VMATHDEF void mat3_setcoly(mat3 r, vec3 v)
 {
-	r[0][1] = v[0]; r[1][1] = v[1]; r[2][1] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][1] = a; r[1][1] = b; r[2][1] = c;
 }
 
 VMATHDEF void mat3_setcolz(mat3 r, vec3 v)
 {
-	r[0][2] = v[0]; r[1][2] = v[1]; r[2][2] = v[2];
+	scalar a = v[0], b = v[1], c = v[2];
+	r[0][2] = a; r[1][2] = b; r[2][2] = c;
 }
 
 VMATHDEF void vec3_mat3_rowa(vec3 r, mat3 m) { vec3_copy(r, m[0]); }
@@ -1818,9 +1823,10 @@ VMATHDEF void mat3_mulrows(mat3 r, mat3 m, scalar a, scalar b, scalar c)
 
 VMATHDEF void mat3_mulrowv(mat3 r, mat3 m, vec3 v)
 {
-	vec3_smul(r[0], v[0], m[0]);
-	vec3_smul(r[1], v[1], m[1]);
-	vec3_smul(r[2], v[2], m[2]);
+	scalar a = v[0], b = v[1], c = v[2];
+	vec3_smul(r[0], a, m[0]);
+	vec3_smul(r[1], b, m[1]);
+	vec3_smul(r[2], c, m[2]);
 }
 
 VMATHDEF void mat3_negate(mat3 r, mat3 m)
@@ -1891,27 +1897,24 @@ VMATHDEF void mat3_lerp(mat3 r, mat3 f, mat3 g, scalar t)
 
 VMATHDEF void vec3_mul_mat3(vec3 r, vec3 v, mat3 m)
 {
-	scalar x, y, z;
-	x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
-	y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
-	z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
+	scalar x = m[0][0] * v[0] + m[1][0] * v[1] + m[2][0] * v[2];
+	scalar y = m[0][1] * v[0] + m[1][1] * v[1] + m[2][1] * v[2];
+	scalar z = m[0][2] * v[0] + m[1][2] * v[1] + m[2][2] * v[2];
 	r[0] = x; r[1] = y; r[2] = z;
 }
 
 VMATHDEF void vec3_mat3_mul(vec3 r, mat3 m, vec3 v)
 {
-	scalar x, y, z;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2];
-	z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2];
+	scalar z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2];
 	r[0] = x; r[1] = y; r[2] = z;
 }
 
 VMATHDEF void vec2_mat3_mul(vec2 r, mat3 m, vec2 v)
 {
-	scalar x, y;
-	x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2];
-	y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2];
 	r[0] = x; r[1] = y;
 }
 
@@ -1924,6 +1927,15 @@ VMATHDEF void mat3_transpose(mat3 r, mat3 m)
 	t = m[1][2]; r[1][2] = m[2][1]; r[2][1] = t;
 	
 	r[0][0] = m[0][0]; r[1][1] = m[1][1]; r[2][2] = m[2][2];
+}
+
+VMATHDEF void mat3_transposed(mat3 r)
+{
+	scalar t;
+	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
+	t = r[0][2]; r[0][2] = r[2][0]; r[2][0] = t;
+	
+	t = r[1][2]; r[1][2] = r[2][1]; r[2][1] = t;
 }
 
 VMATHDEF void mat3_inverse(mat3 r, mat3 m)
@@ -1952,7 +1964,7 @@ VMATHDEF void mat3_inverse(mat3 r, mat3 m)
 
 VMATHDEF void vec3_mat3_trace(vec3 r, mat3 m)
 {
-	r[0] = m[0][0]; r[1] = m[1][1]; r[2] = m[2][2];
+	vec3_setcomp(r, m[0][0], m[1][1], m[2][2]);
 }
 
 VMATHDEF scalar mat3_trace(mat3 m)
@@ -1983,20 +1995,14 @@ VMATHDEF void mat2_id(mat2 r)
 	r[0][0] = r[1][1] = VP(1);
 }
 
-VMATHDEF void mat2_t(mat2 r)
-{
-	scalar t;
-	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
-}
-
-VMATHDEF void mat2_rot(mat2 r, scalar a)
+VMATHDEF void mat2_r(mat2 r, scalar a)
 {
 	scalar c = vcos(a), s = vsin(a);
 	r[0][0] = c; r[0][1] = -s;
 	r[1][0] = s; r[1][1] =  c;
 }
 
-VMATHDEF void mat2_eq_scale(mat2 r, scalar sx, scalar sy)
+VMATHDEF void mat2_sv(mat2 r, scalar sx, scalar sy)
 {
 	r[0][1] = r[1][0] = 0;
 	r[0][0] = sx; r[1][1] = sy;
@@ -2026,21 +2032,31 @@ VMATHDEF void mat2_from_vec4(mat2 r, vec4 v)
 
 VMATHDEF void mat2_setrows(mat2 r, vec2 a, vec2 b)
 {
-	r[0][0] = a[0]; r[0][1] = a[1];
-	r[1][0] = b[0]; r[1][1] = b[1];
+	scalar ax = a[0], ay = a[1], bx = b[0], by = b[1];
+	r[0][0] = ax; r[0][1] = ay;
+	r[1][0] = bx; r[1][1] = by;
 }
 
 VMATHDEF void mat2_setcols(mat2 r, vec2 a, vec2 b)
 {
-	vec2_setcomp(r[0], a[0], b[1]);
-	vec2_setcomp(r[1], a[1], b[1]);
+	scalar ax = a[0], ay = a[1], bx = b[0], by = b[1];
+	r[0][0] = ax; r[0][1] = bx;
+	r[1][0] = ay; r[1][1] = by;
 }
 
 VMATHDEF void mat2_setrowa(mat2 r, vec2 v) { vec2_copy(r[0], v); }
 VMATHDEF void mat2_setrowb(mat2 r, vec2 v) { vec2_copy(r[1], v); }
 
-VMATHDEF void mat2_setcolx(mat2 r, vec2 v) { r[0][0] = v[0]; r[1][0] = v[1]; }
-VMATHDEF void mat2_setcoly(mat2 r, vec2 v) { r[0][1] = v[0]; r[1][1] = v[1]; }
+VMATHDEF void mat2_setcolx(mat2 r, vec2 v)
+{
+	scalar a = v[0], b = v[1];
+	r[0][0] = a; r[1][0] = b;
+}
+VMATHDEF void mat2_setcoly(mat2 r, vec2 v)
+{
+	scalar a = v[0], b = v[1];
+	r[0][1] = a; r[1][1] = b;
+}
 
 VMATHDEF void vec2_mat2_rowa(vec2 r, mat2 m) { vec2_copy(r, m[0]); }
 VMATHDEF void vec2_mat2_rowb(vec2 r, mat2 m) { vec2_copy(r, m[1]); }
@@ -2062,8 +2078,9 @@ VMATHDEF void mat2_mulrows(mat2 r, mat2 m, scalar a, scalar b)
 
 VMATHDEF void mat2_mulrowv(mat2 r, mat2 m, vec2 v)
 {
-	vec2_smul(r[0], v[0], m[0]);
-	vec2_smul(r[1], v[1], m[1]);
+	scalar a = v[0], b = v[1];
+	vec2_smul(r[0], a, m[0]);
+	vec2_smul(r[1], b, m[1]);
 }
 
 VMATHDEF void mat2_negate(mat2 r, mat2 m)
@@ -2125,17 +2142,15 @@ VMATHDEF void mat2_lerp(mat2 r, mat2 f, mat2 g, scalar t)
 
 VMATHDEF void vec2_mul_mat2(vec2 r, vec2 v, mat2 m)
 {
-	scalar x, y;
-	x = m[0][0] * v[0] + m[1][0] * v[1];
-	y = m[0][1] * v[0] + m[1][1] * v[1];
+	scalar x = m[0][0] * v[0] + m[1][0] * v[1];
+	scalar y = m[0][1] * v[0] + m[1][1] * v[1];
 	r[0] = x; r[1] = y;
 }
 
 VMATHDEF void vec2_mat2_mul(vec2 r, mat2 m, vec2 v)
 {
-	scalar x, y;
-	x = m[0][0] * v[0] + m[0][1] * v[1];
-	y = m[1][0] * v[0] + m[1][1] * v[1];
+	scalar x = m[0][0] * v[0] + m[0][1] * v[1];
+	scalar y = m[1][0] * v[0] + m[1][1] * v[1];
 	r[0] = x; r[1] = y;
 }
 
@@ -2145,6 +2160,12 @@ VMATHDEF void mat2_transpose(mat2 r, mat2 m)
 	t = m[0][1]; r[0][1] = m[1][0]; r[1][0] = t;
 	
 	r[0][0] = m[0][0]; r[1][1] = m[1][1];
+}
+
+VMATHDEF void mat2_transposed(mat2 r)
+{
+	scalar t;
+	t = r[0][1]; r[0][1] = r[1][0]; r[1][0] = t;
 }
 
 VMATHDEF void mat2_inverse(mat2 r, mat2 m)
@@ -2160,7 +2181,7 @@ VMATHDEF void mat2_inverse(mat2 r, mat2 m)
 
 VMATHDEF void vec2_mat2_trace(vec2 r, mat2 m)
 {
-	r[0] = m[0][0]; r[1] = m[1][1];;
+	vec2_setcomp(r, m[0][0], m[1][1]);
 }
 
 VMATHDEF scalar mat2_trace(mat2 m)
@@ -2366,14 +2387,14 @@ VMATHDEF void mat3_from_dir(mat3 r, vec3 dir)
 		u[2] = VP(1);
 	
 	vec3_copy(r[2], dir);
-	vec3_makeunit(r[2]);
+	vec3_normalize(r[2], r[2]);
 	
 	vec3_project(r[0], u, r[2]);
-	vec3_makeunit(r[0]);
+	vec3_normalize(r[0], r[0]);
 	
 	vec3_cross(r[1], r[0], r[2]);
 	
-	mat3_t(r);
+	mat3_transpose(r, r);
 }
 
 #endif // VMATH_IMPLEMENTATION

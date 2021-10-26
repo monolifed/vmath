@@ -22,13 +22,13 @@
 int main()
 {
 	mat4 m, n;
-	mat4_eq_roty(m, 1.0);
+	mat4_ry(m, 1.0);
 	PRINTMAT4(m);
 	printf("\n");
 	mat4_inverse(n, m);
 	PRINTMAT4(n);
 	printf("\n");
-	mat4_eq_roty(m, -1.0);
+	mat4_ry(m, -1.0);
 	PRINTMAT4(m);
 	printf("\n");
 	return 0;
