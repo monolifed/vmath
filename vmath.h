@@ -64,6 +64,7 @@ VMATHDEF void vec4_ma(vec4 r, vec4 u, scalar s, vec4 v); // r = u + t * v (multi
 VMATHDEF void vec4_combine(vec4 r, scalar s, vec4 u, scalar t, vec4 v); // r = s * u + t * v (linear combination)
 VMATHDEF void vec4_lerp(vec4 r, vec4 u, vec4 v, scalar t); // r = (1 - t) * u + t * v
 VMATHDEF void vec4_project(vec4 r, vec4 v, vec4 n); // r = projection of v wrt (unit) n
+VMATHDEF void vec4_reject(vec4 r, vec4 v, vec4 n); // r = rejection of v wrt (unit) n
 VMATHDEF void vec4_reflect(vec4 r, vec4 v, vec4 n); // r = reflection of v wrt (unit) n
 
 // vec3 common
@@ -92,6 +93,7 @@ VMATHDEF void vec3_ma(vec3 r, vec3 u, scalar t, vec3 v);
 VMATHDEF void vec3_combine(vec3 r, scalar s, vec3 u, scalar t, vec3 v);
 VMATHDEF void vec3_lerp(vec3 r, vec3 u, vec3 v, scalar t);
 VMATHDEF void vec3_project(vec3 r, vec3 v, vec3 n);
+VMATHDEF void vec3_reject(vec3 r, vec3 v, vec3 n);
 VMATHDEF void vec3_reflect(vec3 r, vec3 v, vec3 n);
 
 // vec2 common
@@ -120,6 +122,7 @@ VMATHDEF void vec2_ma(vec2 r, vec2 u, scalar t, vec2 v);
 VMATHDEF void vec2_combine(vec2 r, scalar s, vec2 u, scalar t, vec2 v);
 VMATHDEF void vec2_lerp(vec2 r, vec2 u, vec2 v, scalar t);
 VMATHDEF void vec2_project(vec2 r, vec2 v, vec2 n);
+VMATHDEF void vec2_reject(vec2 r, vec2 v, vec2 n);
 VMATHDEF void vec2_reflect(vec2 r, vec2 v, vec2 n);
 
 // vec other
@@ -555,13 +558,16 @@ VMATHDEF void vec4_lerp(vec4 r, vec4 u, vec4 v, scalar t)
 
 VMATHDEF void vec4_project(vec4 r, vec4 v, vec4 n)
 {
-	// scalar t = vec4_dot(n, v) / vec4_dot(n, n);
+	vec4_smul(r, vec4_dot(n, v), n);
+}
+
+VMATHDEF void vec4_reject(vec4 r, vec4 v, vec4 n)
+{
 	vec4_ma(r, v, -vec4_dot(n, v), n);
 }
 
 VMATHDEF void vec4_reflect(vec4 r, vec4 v, vec4 n)
 {
-	// scalar t = vec4_dot(n, v) / vec4_dot(n, n);
 	vec4_ma(r, v, -VP(2) * vec4_dot(n, v), n);
 }
 
@@ -704,6 +710,11 @@ VMATHDEF void vec3_lerp(vec3 r, vec3 u, vec3 v, scalar t)
 }
 
 VMATHDEF void vec3_project(vec3 r, vec3 v, vec3 n)
+{
+	vec3_smul(r, vec3_dot(n, v), n);
+}
+
+VMATHDEF void vec3_reject(vec3 r, vec3 v, vec3 n)
 {
 	vec3_ma(r, v, -vec3_dot(n, v), n);
 }
@@ -848,6 +859,11 @@ VMATHDEF void vec2_lerp(vec2 r, vec2 u, vec2 v, scalar t)
 }
 
 VMATHDEF void vec2_project(vec2 r, vec2 v, vec2 n)
+{
+	vec2_smul(r, vec2_dot(n, v), n);
+}
+
+VMATHDEF void vec2_reject(vec2 r, vec2 v, vec2 n)
 {
 	vec2_ma(r, v, -vec2_dot(n, v), n);
 }
@@ -2376,25 +2392,30 @@ VMATHDEF void quat_from_mat3(quat r, mat3 m)
 
 VMATHDEF void mat3_from_dir(mat3 r, vec3 dir)
 {
+	scalar s = vec3_len(dir);
+	if (s == 0)
+	{
+		mat3_id(r);
+		return;
+	}
+	
+	vec3_smul(r[2], VP(1) / s, dir);
+	
 	scalar x = vabs(dir[0]), y = vabs(dir[1]), z = vabs(dir[2]);
-	vec3 u;
-	vec3_zero(u);
+	vec3_zero(r[0]);
 	if (x <= y && x <= z)
-		u[0] = VP(1);
+		r[0][0] = VP(1);
 	else if (y <= x && y <= z)
-		u[1] = VP(1);
+		r[0][1] = VP(1);
 	else
-		u[2] = VP(1);
+		r[0][2] = VP(1);
 	
-	vec3_copy(r[2], dir);
-	vec3_normalize(r[2], r[2]);
-	
-	vec3_project(r[0], u, r[2]);
+	vec3_reject(r[0], r[0], r[2]);
 	vec3_normalize(r[0], r[0]);
 	
 	vec3_cross(r[1], r[0], r[2]);
 	
-	mat3_transpose(r, r);
+	mat3_transposed(r);
 }
 
 #endif // VMATH_IMPLEMENTATION
