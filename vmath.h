@@ -333,8 +333,9 @@ VMATHDEF scalar mat2_det(mat2 m);
 
 // quat common (also vec4)
 VMATHDEF void quat_id(quat r); // r = 1
-VMATHDEF void quat_from_rot(quat r, vec3 v, scalar a); // q = rotation around axis:v with angle:a
-VMATHDEF void quat_inv(quat r, quat q); // r = inverse of q
+ // q = rotation around axis:v with angle:a, return len(x, y, z)
+VMATHDEF scalar quat_from_rot(quat r, scalar a, scalar x, scalar y, scalar z);
+VMATHDEF scalar quat_inv(quat r, quat q); // r = inverse of q, return len(q)
 VMATHDEF void quat_conj(quat r, quat q); // r = conjugate of q
 VMATHDEF void quat_from_vec3(quat r, vec3 v); // r = v ({x, y, z, 0})
 VMATHDEF void vec3_from_quat(vec3 r, quat q); // r = q ({x, y, z})
@@ -2243,19 +2244,36 @@ VMATHDEF void quat_id(quat r)
 	r[0] = r[1] = r[2] = 0; r[3] = VP(1);
 }
 
-VMATHDEF void quat_from_rot(quat r, vec3 v, scalar a)
+VMATHDEF scalar quat_from_rot(quat r, scalar a, scalar x, scalar y, scalar z)
 {
-	a = a / VP(2);
-	scalar s = vsin(a) / vsqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-	r[0] = v[0] * s; r[1] = v[1] * s; r[2] = v[2] * s;
+	scalar len = x * x + y * y + z * z;
+	if (len == 0)
+	{
+		//quat_id(r);
+		return 0;
+	}
+	
+	len = vsqrt(len);
+	a /= 2;
+	scalar s = vsin(a) / len;
+	
+	r[0] = x * s; r[1] = y * s; r[2] = z * s;
 	r[3] = vcos(a);
+	return len;
 }
 
-VMATHDEF void quat_inv(quat r, quat v)
+VMATHDEF scalar quat_inv(quat r, quat v)
 {
-	scalar s = VP(1) / vsqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
-	r[0] = -v[0] * s; r[1] = -v[1] * s;
-	r[2] = -v[2] * s; r[3] =  v[3] * s;
+	scalar len = v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3];
+	if (len == 0)
+	{
+		//quat_id(r);
+		return 0;
+	}	
+	len = vsqrt(len);
+	r[0] = -v[0] / len; r[1] = -v[1] / len;
+	r[2] = -v[2] / len; r[3] =  v[3] / len;
+	return len;
 }
 
 VMATHDEF void quat_conj(quat r, quat v)
@@ -2414,32 +2432,59 @@ VMATHDEF void quat_from_mat3(quat r, mat3 m)
 
 VMATHDEF void mat3_from_dir(mat3 r, vec3 dir)
 {
-	scalar s = vec3_len(dir);
-	if (s == 0)
-	{
-		mat3_id(r);
-		return;
-	}
+	vec3 n, u, v;
+	vec3_negate(n, dir);
+	vec3_unit(n);
 	
-	vec3_smul(r[2], VP(1) / s, dir);
+	vec3_zero(u);
+	scalar minv = vabs(n[0]), c1 = vabs(n[1]), c2 = vabs(n[2]);
+	int pos = 0;
+	if (c1 < minv) { pos = 1; minv = c1; }
+	if (c2 < minv) { pos = 2; }
+	u[pos] = VP(1);
 	
-	scalar x = vabs(dir[0]), y = vabs(dir[1]), z = vabs(dir[2]);
-	vec3_zero(r[0]);
-	if (x <= y && x <= z)
-		r[0][0] = VP(1);
-	else if (y <= x && y <= z)
-		r[0][1] = VP(1);
-	else
-		r[0][2] = VP(1);
+	vec3_reject(u, u, n);
+	vec3_unit(u);
 	
-	vec3_reject(r[0], r[0], r[2]);
-	vec3_normalize(r[0], r[0]);
+	vec3_cross(v, n, u);
 	
-	vec3_cross(r[1], r[0], r[2]);
-	
-	mat3_transposed(r);
+	r[0][0] = u[0]; r[0][1] = u[1]; r[0][2] = u[2];
+	r[1][0] = v[0]; r[1][1] = v[1]; r[1][2] = v[2];
+	r[2][0] = n[0]; r[2][1] = n[1]; r[2][2] = n[2];
 }
 
+VMATHDEF void mat3_from_dirup(mat3 r, vec3 dir, vec3 up)
+{
+	vec3 n, u, v;
+	vec3_negate(n, dir);
+	vec3_unit(n);
+	
+	
+	vec3_cross(u, up, n);
+	vec3_unit(u);
+	
+	vec3_cross(v, n, u);
+	
+	r[0][0] = u[0]; r[0][1] = u[1]; r[0][2] = u[2];
+	r[1][0] = v[0]; r[1][1] = v[1]; r[1][2] = v[2];
+	r[2][0] = n[0]; r[2][1] = n[1]; r[2][2] = n[2];
+}
+
+VMATHDEF void mat3x4_lookat(mat3 r, vec3 eye, vec3 look, vec3 up)
+{
+	vec3 n, u, v;
+	vec3_sub(n, eye, look);
+	vec3_unit(n);
+	
+	vec3_cross(u, up, n);
+	vec3_unit(u);
+	
+	vec3_cross(v, n, u);
+	
+	r[0][0] = u[0]; r[0][1] = u[1]; r[0][2] = u[2]; r[0][3] = -vec3_dot(u, eye);
+	r[1][0] = v[0]; r[1][1] = v[1]; r[1][2] = v[2]; r[1][3] = -vec3_dot(v, eye);
+	r[2][0] = n[0]; r[2][1] = n[1]; r[2][2] = n[2]; r[2][3] = -vec3_dot(n, eye);
+}
 #endif // VMATH_IMPLEMENTATION
 
 
