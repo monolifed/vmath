@@ -13,9 +13,8 @@ typedef double scalar;
 typedef float  scalar;
 #endif
 
-// plane: x,y,z is unit normal
-//        w is (signed) distance in normal direction
-// quat: x,y,z is i,j,k components, w is real component
+// plane: vec4 with x,y,z as its unit normal, w as offset from 0 (in normal dir)
+// quat: vec4 with x,y,z as i,j,k components, w as the real component
 typedef scalar vec4[4], quat[4], plane[4];
 
 typedef scalar vec3[3];
@@ -23,10 +22,10 @@ typedef scalar vec3[3];
 typedef scalar vec2[2];
 
 
-// a,b,c,d are rows of the matrix
-// i.e. row major matrix
-// we use v' = Mv
-// i.e. pre-multiplied
+// row major
+// a,b,c,d are row labels (M[0], M[1], M[2], M[3] resp.)
+// x,y,z,w are labels of columns
+// v' = Mv (pre-multiplied)
 typedef vec4 mat4[4], mat4x4[4];
 
 typedef vec4 mat3x4[3]; // last row is assumed to be {0,0,0,1}
@@ -182,7 +181,7 @@ VMATHDEF void vec3_mat4_mul(vec3 r, mat4 m, vec3 v); // r = mv (affine)
 VMATHDEF void mat4_transpose(mat4 r, mat4 m); // r = m^T
 VMATHDEF void mat4_transposed(mat4 r); // r = r^T
 VMATHDEF void vec4_mat4_trace(vec4 r, mat4 m); // return trace (as) vector
-VMATHDEF scalar mat4_inverse(mat4 r, mat4 m); // r = inverse(m) (r != m)
+VMATHDEF scalar mat4_inverse(mat4 r, mat4 m); // r = inverse(m), return det of m
 VMATHDEF scalar mat4_trace(mat4 m); // return trace
 VMATHDEF scalar mat4_det3(mat4 m); // return determinant of inner 3x3
 VMATHDEF scalar mat4_det(mat4 m); // return determinant of m
