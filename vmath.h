@@ -390,12 +390,16 @@ static void *vmemcpy(void *d, const void *s, unsigned n)
 #define vabs(X)  fabsf(X)
 #define vsin(X)  sinf(X)
 #define vcos(X)  cosf(X)
+#define vtan(X)  tanf(X)
+#define vacos(X) acosf(X)
 #else
 #define VP(X) X##.0
 #define vsqrt(X) sqrt(X)
 #define vabs(X)  fabs(X)
 #define vsin(X)  sin(X)
 #define vcos(X)  cos(X)
+#define vtan(X)  tan(X)
+#define vacos(X) acos(X)
 #endif
 
 // -------------------
@@ -2347,50 +2351,6 @@ VMATHDEF void mat3_from_quat(mat3 r, quat q)
 	r[2][2] = VP(1) - VP(2) * (x * x + y * y);
 }
 
-VMATHDEF void mat3x4_from_srt(mat3x4 r, vec3 vs, quat qr, vec3 vt)
-{
-	scalar x = qr[0], y = qr[1], z = qr[2], w = qr[3];
-	
-	r[0][0] = vs[0] * (VP(1) - VP(2) * (y * y + z * z));
-	r[0][1] = vs[1] * VP(2) * (x * y - z * w);
-	r[0][2] = vs[2] * VP(2) * (x * z + y * w);
-	r[0][3] = vt[0];
-	
-	r[1][0] = vs[0] * VP(2) * (x * y + z * w);
-	r[1][1] = vs[1] * (VP(1) - VP(2) * (x * x + z * z));
-	r[1][2] = vs[2] * VP(2) * (y * z - x * w);
-	r[1][3] = vt[1];
-	
-	r[2][0] = vs[0] * VP(2) * (x * z - y * w);
-	r[2][1] = vs[1] * VP(2) * (y * z + x * w);
-	r[2][2] = vs[2] * (VP(1) - VP(2) * (x * x + y * y));
-	r[2][3] = vt[2];
-}
-
-VMATHDEF void mat3x4_inverse_srt(mat3x4 r, mat3x4 m)
-{
-	scalar n, x, y, z;
-	
-	x = m[0][0]; y = m[1][0]; z = m[2][0];
-	n = VP(1) / (x * x + y * y + z * z);
-	r[0][0] = x * n; r[0][1] = y * n; r[0][2] = z * n;
-	
-	x = m[0][1]; y = m[1][1]; z = m[2][1];
-	n = VP(1) / (x * x + y * y + z * z);
-	r[1][0] = x * n; r[1][1] = y * n; r[1][2] = z * n;
-	
-	x = m[0][2]; y = m[1][2]; z = m[2][2];
-	n = VP(1) / (x * x + y * y + z * z);
-	r[2][0] = x * n; r[2][1] = y * n; r[2][2] = z * n;
-	
-	x = m[0][3]; y = m[1][3]; z = m[2][3];
-	
-	r[0][3] = -(r[0][0] * x + r[0][1] * y + r[0][2] * z);
-	r[1][3] = -(r[1][0] * x + r[1][1] * y + r[1][2] * z);
-	r[2][3] = -(r[2][0] * x + r[2][1] * y + r[2][2] * z);
-}
-
-
 VMATHDEF void quat_from_mat3(quat r, mat3 m)
 {
 	scalar t, x,y,z,w;
@@ -2429,6 +2389,120 @@ VMATHDEF void quat_from_mat3(quat r, mat3 m)
 	t = VP(1) / (VP(2) * vsqrt(t));
 	r[0] = t * x; r[1] = t * y; r[2] = t * z; r[3] = t * w;
 }
+
+VMATHDEF void quat_slerp(quat r, quat u, quat v, scalar t)
+{
+	scalar cos_a = vec4_dot(u, v);
+	
+	if (cos_a < 0)
+	{
+		vec4_negate(r, u);
+		cos_a = -cos_a;
+	}
+	else
+	{
+		vec4_copy(r, u);
+	}
+	
+	if (cos_a > 0.999)
+	{
+		if (cos_a < 1.0)
+		{
+			vec4_lerp(r, r, v, t);
+			vec4_unit(r);
+		}
+		return;
+	}
+	
+	scalar a = vacos(cos_a);
+	scalar sin_a = vsqrt(1 - cos_a * cos_a);
+
+	vec4_combine(r, vsin((1 - t) * a) / sin_a, r, vsin(t * a) / sin_a, v);
+}
+
+VMATHDEF void mat3x4_from_srt(mat3x4 r, vec3 vs, quat qr, vec3 vt)
+{
+	scalar x = qr[0], y = qr[1], z = qr[2], w = qr[3];
+	
+	r[0][0] = vs[0] * (VP(1) - VP(2) * (y * y + z * z));
+	r[0][1] = vs[1] * VP(2) * (x * y - z * w);
+	r[0][2] = vs[2] * VP(2) * (x * z + y * w);
+	r[0][3] = vt[0];
+	
+	r[1][0] = vs[0] * VP(2) * (x * y + z * w);
+	r[1][1] = vs[1] * (VP(1) - VP(2) * (x * x + z * z));
+	r[1][2] = vs[2] * VP(2) * (y * z - x * w);
+	r[1][3] = vt[1];
+	
+	r[2][0] = vs[0] * VP(2) * (x * z - y * w);
+	r[2][1] = vs[1] * VP(2) * (y * z + x * w);
+	r[2][2] = vs[2] * (VP(1) - VP(2) * (x * x + y * y));
+	r[2][3] = vt[2];
+}
+
+VMATHDEF void mat4_from_srt(mat4 r, vec3 vs, quat qr, vec3 vt)
+{
+	mat3x4_from_srt(r, vs, qr, vt);
+	r[3][0] = r[3][1] = r[3][2] = 0; r[3][3] = 1;
+}
+
+// m is assumed to be transform (scale+rotate+translate)
+VMATHDEF void mat3x4_inv_srt(mat3x4 r, mat3x4 m)
+{
+	scalar n, x, y, z;
+	
+	mat3x4_transpose(r, m);
+	
+	x = r[0][0]; y = r[0][1]; z = r[0][2];
+	n = VP(1) / (x * x + y * y + z * z);
+	r[0][0] = x * n; r[0][1] = y * n; r[0][2] = z * n;
+	
+	x = r[1][0]; y = r[1][1]; z = r[1][2];
+	n = VP(1) / (x * x + y * y + z * z);
+	r[1][0] = x * n; r[1][1] = y * n; r[1][2] = z * n;
+	
+	x = r[2][0]; y = r[2][1]; z = r[2][2];
+	n = VP(1) / (x * x + y * y + z * z);
+	r[2][0] = x * n; r[2][1] = y * n; r[2][2] = z * n;
+	
+	x = r[0][3]; y = r[1][3]; z = r[2][3];
+	
+	r[0][3] = -(r[0][0] * x + r[0][1] * y + r[0][2] * z);
+	r[1][3] = -(r[1][0] * x + r[1][1] * y + r[1][2] * z);
+	r[2][3] = -(r[2][0] * x + r[2][1] * y + r[2][2] * z);
+}
+
+VMATHDEF void mat4_perspective(mat3 r, scalar fovy, scalar aspect, scalar near, scalar far)
+{
+	fovy = vtan(fovy / 2);
+	
+	vmemset(r, 0, sizeof(mat4));
+	r[0][0]  = 1 / (fovy * aspect);
+	r[1][1]  = 1 / fovy;
+	r[2][2] = -(far + near) / (far - near);
+	
+	r[2][3] = -(2 * far * near) / (far - near);
+	r[3][2] = -1;
+}
+
+VMATHDEF void mat3x4_ortho(mat3x4 r, scalar L, scalar R, scalar T, scalar B, scalar N, scalar F)
+{
+	vmemset(r, 0, sizeof( mat3x4));
+	r[0][0] =  2 / (R - L);
+	r[1][1] =  2 / (T - B);
+	r[2][2] = -2 / (F - N);
+	
+	r[0][3] = -(R + L) / (R - L);
+	r[1][3] = -(T + B) / (T - B);
+	r[2][3] = -(F + N) / (F - N);
+}
+
+VMATHDEF void mat4_ortho(mat4 r, scalar L, scalar R, scalar T, scalar B, scalar N, scalar F)
+{
+	mat3x4_ortho(r, L, R, T, B, N, F);
+	r[3][0] = r[3][1] = r[3][2] = 0; r[3][3] = 1;
+}
+
 
 VMATHDEF void mat3_from_dir(mat3 r, vec3 dir)
 {
@@ -2470,7 +2544,7 @@ VMATHDEF void mat3_from_dirup(mat3 r, vec3 dir, vec3 up)
 	r[2][0] = n[0]; r[2][1] = n[1]; r[2][2] = n[2];
 }
 
-VMATHDEF void mat3x4_lookat(mat3 r, vec3 eye, vec3 look, vec3 up)
+VMATHDEF void mat3x4_lookat(mat3x4 r, vec3 eye, vec3 look, vec3 up)
 {
 	vec3 n, u, v;
 	vec3_sub(n, eye, look);
@@ -2485,6 +2559,14 @@ VMATHDEF void mat3x4_lookat(mat3 r, vec3 eye, vec3 look, vec3 up)
 	r[1][0] = v[0]; r[1][1] = v[1]; r[1][2] = v[2]; r[1][3] = -vec3_dot(v, eye);
 	r[2][0] = n[0]; r[2][1] = n[1]; r[2][2] = n[2]; r[2][3] = -vec3_dot(n, eye);
 }
+
+VMATHDEF void mat4_lookat(mat4 r, vec3 eye, vec3 look, vec3 up)
+{
+	mat3x4_lookat(r, eye, look, up);
+	r[3][0] = r[3][1] = r[3][2] = 0; r[3][3] = 1;
+}
+
+
 #endif // VMATH_IMPLEMENTATION
 
 
